@@ -1,5 +1,4 @@
 # Compucore
-# Compucore Project README
 
 ## Overview
 
