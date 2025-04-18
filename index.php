@@ -23,26 +23,41 @@ if ($conn->connect_error) {
 }
 
 // Handle filter selection
-$filter = isset($_POST['filter']) ? $_POST['filter'] : '';
+$filter = isset($_GET['filter']) ? $_GET['filter'] : '';
+$category = isset($_GET['category']) ? $_GET['category'] : '';
 
-// Update SQL query based on filter
+// Base query
+$sql = "SELECT p.*, c.CAT_NAME 
+        FROM products p 
+        LEFT JOIN categories c ON p.FK1_CATEGORY_ID = c.PK_CATEGORY_ID";
+
+// Add WHERE clause if needed
+$where = [];
+if (!empty($category)) {
+    $where[] = "c.CAT_NAME = '" . $conn->real_escape_string($category) . "'";
+}
+
+// Add WHERE clause to query if conditions exist
+if (!empty($where)) {
+    $sql .= " WHERE " . implode(' AND ', $where);
+}
+
+// Add ORDER BY clause based on filter
 switch ($filter) {
     case 'new':
-        $sql = "SELECT PK_PRODUCT_ID, PROD_NAME, PRICE, IMAGE FROM products ORDER BY CREATED_AT DESC";
+        $sql .= " ORDER BY p.CREATED_AT DESC";
         break;
     case 'price_asc':
-        $sql = "SELECT PK_PRODUCT_ID, PROD_NAME, PRICE, IMAGE FROM products ORDER BY PRICE ASC";
+        $sql .= " ORDER BY p.PRICE ASC";
         break;
     case 'price_desc':
-        $sql = "SELECT PK_PRODUCT_ID, PROD_NAME, PRICE, IMAGE FROM products ORDER BY PRICE DESC";
+        $sql .= " ORDER BY p.PRICE DESC";
         break;
     case 'rating':
-        // Assuming there's a RATING column
-        $sql = "SELECT PK_PRODUCT_ID, PROD_NAME, PRICE, IMAGE FROM products ORDER BY RATING DESC";
+        $sql .= " ORDER BY p.RATING DESC";
         break;
     default:
-        $sql = "SELECT PK_PRODUCT_ID, PROD_NAME, PRICE, IMAGE FROM products";
-        break;
+        $sql .= " ORDER BY p.CREATED_AT DESC"; // Default sorting
 }
 
 $result = $conn->query($sql);
@@ -107,12 +122,58 @@ $result = $conn->query($sql);
     margin-right: 40px;
 }
 
-.filters button {
-    margin-right: 10px;
-    padding: 5px 10px;
-    border: 1px solid #ccc;
+.filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.category-filter select {
+    padding: 8px 16px;
+    border: 1px solid #d32f2f;
+    border-radius: 5px;
+    color: #d32f2f;
     background-color: white;
     cursor: pointer;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.category-filter select:hover {
+    border-color: #b71c1c;
+}
+
+.category-filter select:focus {
+    outline: none;
+    border-color: #b71c1c;
+    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+}
+
+.filters button {
+    background-color: white;
+    border: 1px solid #d32f2f;
+    color: #d32f2f;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filters button:hover,
+.filters button.active {
+    background-color: #d32f2f;
+    color: white;
+}
+
+.filters button.active {
+    font-weight: bold;
 }
 
 .product-grid :hover
@@ -254,7 +315,7 @@ html {
 
 .popup {
     position: fixed;
-    top: 50px;
+    top: 60px;
     right: 20px;
     background-color: #4CAF50;
     color: white;
@@ -280,13 +341,29 @@ html {
 
     <section class="products" id="products">
         <!-- Filter Form -->
-        <form method="POST" action="filter">
+        <form method="GET" action="">
         <div class="filters">
-                <button type="submit" name="filter" value="new">New</button>
-                <button type="submit" name="filter" value="price_asc">Price ascending</button>
-                <button type="submit" name="filter" value="price_desc">Price descending</button>
-                <button type="submit" name="filter" value="rating">Rating</button>
+            <div class="filter-buttons">
+                <button type="submit" name="filter" value="new" <?php echo $filter == 'new' ? 'class="active"' : ''; ?>>New</button>
+                <button type="submit" name="filter" value="price_asc" <?php echo $filter == 'price_asc' ? 'class="active"' : ''; ?>>Price ascending</button>
+                <button type="submit" name="filter" value="price_desc" <?php echo $filter == 'price_desc' ? 'class="active"' : ''; ?>>Price descending</button>
+                <button type="submit" name="filter" value="rating" <?php echo $filter == 'rating' ? 'class="active"' : ''; ?>>Rating</button>
             </div>
+            <div class="category-filter">
+                <select name="category" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    <?php
+                    $cat_sql = "SELECT * FROM categories ORDER BY CAT_NAME";
+                    $cat_result = $conn->query($cat_sql);
+                    while($cat = $cat_result->fetch_assoc()) {
+                        $selected = isset($_GET['category']) && $_GET['category'] == $cat['CAT_NAME'] ? 'selected' : '';
+                        echo "<option value='" . htmlspecialchars($cat['CAT_NAME']) . "' $selected>" . 
+                             htmlspecialchars($cat['CAT_NAME']) . "</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+        </div>
         </form>
 
         <div class="product-grid" >

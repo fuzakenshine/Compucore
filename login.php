@@ -133,7 +133,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             text-align: center;
         }
         .logo {
-            margin-bottom: 20px;
+            margin-bottom: -10px;
             text-align: center;
         }
         .logo img {

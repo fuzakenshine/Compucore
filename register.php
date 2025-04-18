@@ -121,6 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 10px;
             text-align: center;
         }
+        .logo {
+            margin-bottom: -1   0px;
+            text-align: center;
+        }
+        .logo img {
+            width: 150px; /* Adjust the size as needed */
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -132,6 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <div class="right">
+    <div class="logo">
+        <img src="uploads/logo.png" alt="CompuCore Logo">
+    </div>
         <h1>Enhance your PC performance!</h1>
         <form method="POST">
             <?php if (isset($error)): ?>

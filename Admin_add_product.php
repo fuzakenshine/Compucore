@@ -196,10 +196,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="sidebar">
-        <a href="#">Home</a>
-        <a href="#">Suppliers</a>
+        <a href="Admin_home.php">Home</a>
+        <a href="Admin_supplier.php">Suppliers</a>
         <a href="Admin_product.php">Products</a>
-        <a href="#">Logout</a>
+        <a href="login.php">Logout</a>
     </div>
     <div class="main-content">
         <div class="header">

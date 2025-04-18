@@ -14,21 +14,40 @@
         background-color: transparent; /* Transparent by default */
         transition: background-color 0.3s ease;
         color: white;
-        padding: 20px 25px;
+        padding: 10px 20px;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 1000;
+        height: 30px;
     }
 
     .header.scrolled {
         background-color: #d32f2f; /* Red on scroll */
     }
-  
-        .header .logo {
+    .header .logo {
+    font-size: 24px;
+    width: 100px; /* Adjust width as needed */
+    height: 30px; /* Adjust height as needed */
+    font-weight: bold;
+}
+        .header .logo img {
+            height: 50px;
+            width: 80px;
+            display: block;
+            margin: 0 auto;
+            transition: transform 0.3s ease;
+        }
+        .header .logo img:hover {
+            transform: scale(1.1);
+        }
+        .header .logo a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
             font-size: 24px;
-            font-weight: bold;
         }
         .header .search-bar {
             display: flex;
@@ -102,7 +121,12 @@
 </head>
 <body>
     <header class="header">
-        <div class="logo">CompuCore</div>
+<!-- Replace the empty div with an img tag -->
+<div class="logo">
+    <a href="index.php">
+        <img src="uploads/LOGOW.PNG" alt="Compucore Logo" height="30">
+    </a>
+</div>
         <div class="search-bar">
             <input type="text" placeholder="Search">
             <button><i class="fas fa-search"></i></button>
