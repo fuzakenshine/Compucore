@@ -1,24 +1,32 @@
 <?php
 session_start();
-include 'db_connect.php'; // Include the database connector
+include 'db_connect.php';
 
-// Get product ID from query string
 $product_id = isset($_GET['product_id']) ? $_GET['product_id'] : null;
 
 if ($product_id) {
-    // Fetch product details
-    $sql = "SELECT * FROM products WHERE PK_PRODUCT_ID = ?";
+    // Update query to use REVIEWS table instead of ratings
+    $sql = "SELECT p.*, 
+            (SELECT AVG(RATING) FROM REVIEWS WHERE FK2_PRODUCT_ID = p.PK_PRODUCT_ID) as avg_rating,
+            (SELECT COUNT(*) FROM REVIEWS WHERE FK2_PRODUCT_ID = p.PK_PRODUCT_ID) as review_count
+            FROM products p 
+            WHERE p.PK_PRODUCT_ID = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $product_id);
     $stmt->execute();
     $result = $stmt->get_result();
+    $product = $result->fetch_assoc();
 
-    if ($result->num_rows === 1) {
-        $product = $result->fetch_assoc();
-    } else {
-        echo "Product not found.";
-        exit;
-    }
+    // Fetch reviews using the new table structure
+    $reviews_sql = "SELECT r.*, c.F_NAME, c.L_NAME 
+                   FROM REVIEWS r 
+                   JOIN customer c ON r.FK1_CUSTOMER_ID = c.PK_CUSTOMER_ID 
+                   WHERE r.FK2_PRODUCT_ID = ? 
+                   ORDER BY r.CREATED_AT DESC";
+    $reviews_stmt = $conn->prepare($reviews_sql);
+    $reviews_stmt->bind_param("i", $product_id);
+    $reviews_stmt->execute();
+    $reviews = $reviews_stmt->get_result();
 } else {
     echo "Invalid product ID.";
     exit;
@@ -47,10 +55,29 @@ if ($product_id) {
         }
         .product-detail {
             display: flex;
-            gap: 20px;
+            gap: 40px;
+            align-items: flex-start;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .product-image {
             flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .product-image img {
+            width: 400px;  /* Fixed width */
+            height: 400px; /* Fixed height */
+            object-fit: contain; /* Maintains aspect ratio without stretching */
+            border-radius: 8px;
+            background-color: white;
         }
         .product-info {
             flex: 2;
@@ -177,6 +204,126 @@ if ($product_id) {
         .header .burger-menu:hover .dropdown-content {
             display: block;
         }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .rating-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stars .fa-star {
+            color: #ddd;
+        }
+
+        .stars .fa-star.active {
+            color: #ffc107;
+        }
+
+        .price {
+            font-size: 32px;
+            color: #d32f2f;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .quantity {
+            margin-bottom: 20px;
+        }
+
+        .quantity select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .add-to-cart-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .specs-section, .description-section {
+            margin-top: 30px;
+        }
+
+        .reviews-section {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #ddd;
+        }
+
+        .review-item {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .reviewer-name {
+            font-weight: bold;
+        }
+
+        .review-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .average-rating {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .rating-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        /* Add to your existing styles */
+        .review-image {
+            margin-top: 10px;
+        }
+
+        .review-image img {
+            max-width: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .review-text {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        .reviews-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 20px;
+        }
+
+        .review-item {
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
@@ -208,16 +355,86 @@ if ($product_id) {
     <div class="container">
         <div class="product-detail">
             <div class="product-image">
-                <img src="uploads/<?php echo $product['IMAGE']; ?>" alt="<?php echo $product['PROD_NAME']; ?>" style="width:100%;">
+                <img src="uploads/<?php echo htmlspecialchars($product['IMAGE']); ?>" alt="<?php echo htmlspecialchars($product['PROD_NAME']); ?>">
             </div>
             <div class="product-info">
-                <h1><?php echo $product['PROD_NAME']; ?></h1>
-                <p>Price: ₱<?php echo number_format($product['PRICE'], 2); ?></p>
-                <p><?php echo $product['PROD_DESC']; ?></p>
-                <form method="POST" action="ordernow.php">
-                    <input type="hidden" name="product_id" value="<?php echo $product['PK_PRODUCT_ID']; ?>">
-                    <button type="submit" class="order-button">Order Now</button>
-                </form>
+                <div class="product-header">
+                    <h1><?php echo htmlspecialchars($product['PROD_NAME']); ?></h1>
+                    <div class="rating-box">
+                        <div class="stars">
+                            <?php
+                            $rating = round($product['avg_rating'] ?? 0);
+                            for ($i = 1; $i <= 5; $i++) {
+                                echo '<i class="fas fa-star ' . ($i <= $rating ? 'active' : '') . '"></i>';
+                            }
+                            ?>
+                        </div>
+                        <span class="rating-count"><?php echo $product['review_count'] ?? 0; ?> Reviews</span>
+                    </div>
+                </div>
+                <div class="price">₱<?php echo number_format($product['PRICE'], 2); ?></div>
+                <div class="quantity">
+                    <label>Quantity:</label>
+                    <select name="quantity">
+                        <?php for($i=1; $i<=10; $i++): ?>
+                            <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <button class="add-to-cart-btn">Add to Cart</button>
+                
+                <div class="specs-section">
+                    <h2>Specifications:</h2>
+                    <div class="specs-content">
+                        <?php echo nl2br(htmlspecialchars($product['PROD_SPECS'] ?? 'No specifications available')); ?>
+                    </div>
+                </div>
+                
+                <div class="description-section">
+                    <h2>Description:</h2>
+                    <div class="description-content">
+                        <?php echo nl2br(htmlspecialchars($product['PROD_DESC'])); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="reviews-section">
+            <h2>Reviews and Ratings</h2>
+            <div class="average-rating">
+                <div class="rating-number"><?php echo number_format($product['avg_rating'] ?? 0, 1); ?></div>
+                <div class="rating-stars">
+                    <?php 
+                    $rating = round($product['avg_rating'] ?? 0);
+                    for($i = 1; $i <= 5; $i++): 
+                    ?>
+                        <i class="fas fa-star <?php echo ($i <= $rating) ? 'active' : ''; ?>"></i>
+                    <?php endfor; ?>
+                </div>
+                <div class="rating-count"><?php echo $product['review_count'] ?? 0; ?> Reviews</div>
+            </div>
+            
+            <div class="reviews-list">
+                <?php while($review = $reviews->fetch_assoc()): ?>
+                    <div class="review-item">
+                        <div class="review-header">
+                            <div class="reviewer-name"><?php echo htmlspecialchars($review['F_NAME'] . ' ' . $review['L_NAME']); ?></div>
+                            <div class="review-stars">
+                                <?php for($i = 1; $i <= 5; $i++): ?>
+                                    <i class="fas fa-star <?php echo ($i <= $review['RATING']) ? 'active' : ''; ?>"></i>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                        <div class="review-text"><?php echo nl2br(htmlspecialchars($review['COMMENT'])); ?></div>
+                        <div class="review-image">
+                            <?php if(!empty($review['IMAGE'])): ?>
+                                <img src="uploads/reviews/<?php echo htmlspecialchars($review['IMAGE']); ?>" alt="Review Image">
+                            <?php endif; ?>
+                        </div>
+                        <div class="review-date"><?php echo date('F d, Y', strtotime($review['CREATED_AT'])); ?></div>
+                    </div>
+                <?php endwhile; ?>
             </div>
         </div>
     </div>

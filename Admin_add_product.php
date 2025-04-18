@@ -1,4 +1,4 @@
-    <?php
+<?php
 session_start();
 include 'db_connect.php'; // Include the database connector
 
@@ -6,6 +6,7 @@ include 'db_connect.php'; // Include the database connector
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prod_name = $_POST['prod_name'];
     $prod_desc = $_POST['prod_desc'];
+    $prod_spec = $_POST['prod_spec']; // Add this line
     $price = $_POST['price'];
     $qty = $_POST['qty'];
     $category_id = $_POST['category_id'];
@@ -17,15 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $target_file = $target_dir . basename($image);
 
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-        // Insert product into the database
-        $sql = "INSERT INTO PRODUCTS (FK1_CATEGORY_ID, FK2_SUPPLIER_ID, PROD_NAME, PROD_DESC, PRICE, QTY, IMAGE, UPDATED_AT) 
-                VALUES ('$category_id', '$supplier_id', '$prod_name', '$prod_desc', '$price', '$qty', '$image', NOW())";
+        // Update the SQL query to include PROD_SPEC
+        $sql = "INSERT INTO PRODUCTS (FK1_CATEGORY_ID, FK2_SUPPLIER_ID, PROD_NAME, PROD_DESC, PROD_SPECS    , PRICE, QTY, IMAGE, UPDATED_AT) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iisssdis", $category_id, $supplier_id, $prod_name, $prod_desc, $prod_spec, $price, $qty, $image);
 
-        if ($conn->query($sql) === TRUE) {
+        if ($stmt->execute()) {
             echo "<script>alert('Product added successfully!'); window.location.href='Admin_product.php';</script>";
         } else {
-            echo "Error: " . $sql . "<br>" . $conn->error;
+            echo "Error: " . $stmt->error;
         }
+        $stmt->close();
     } else {
         echo "<script>alert('Failed to upload image.');</script>";
     }
@@ -113,7 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 97%;
         }
         .form-container textarea {
-            height: 100px;
+            height: 150px;
+            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 100px;
+            max-height: 300px;
         }
         .form-container .image-upload {
             display: flex;
@@ -249,8 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="right">
                     <textarea name="prod_desc" placeholder="Description" required></textarea>
-                    <textarea name="specifications" placeholder="Specification"></textarea>
-                     
+                    <textarea name="prod_spec" placeholder="Specifications" required></textarea>
                 </div>
             </div>
             <button type="submit">Add Product</button>
