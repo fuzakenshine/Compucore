@@ -13,8 +13,28 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Add these lines after your database connection code
+$filter = isset($_GET['filter']) ? $_GET['filter'] : '';
+$category = isset($_GET['category']) ? $_GET['category'] : '';
+
 // Fetch products from the database
 $sql = "SELECT PK_PRODUCT_ID, PROD_NAME, PRICE, IMAGE FROM products";
+$result = $conn->query($sql);
+
+// Pagination handling
+$items_per_page = 18;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $items_per_page;
+
+// Modify your SQL query to include LIMIT and OFFSET
+$count_sql = "SELECT COUNT(*) as total FROM products";
+$total_result = $conn->query($count_sql);
+$total_rows = $total_result->fetch_assoc()['total'];
+$total_pages = ceil($total_rows / $items_per_page);
+
+// Add LIMIT to your existing SQL query
+$sql .= " LIMIT $items_per_page OFFSET $offset";
+
 $result = $conn->query($sql);
 ?>
 
@@ -300,6 +320,35 @@ $result = $conn->query($sql);
             color: white;
             padding: 10px 0;
         }
+        .pagination {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.pagination button {
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    margin: 0 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination button.active {
+    background-color: #b71c1c;
+    font-weight: bold;
+}
+
+.pagination button:hover {
+    background-color: #b71c1c;
+}
+
+.pagination a {
+    text-decoration: none;
+}
     </style>
 </head>
 <body>
@@ -330,12 +379,6 @@ $result = $conn->query($sql);
     </section>
 
     <section class="products">
-        <div class="filters">
-            <button onclick="window.location.href='login.php'">New</button>
-            <button onclick="window.location.href='login.php'">Price ascending</button>
-            <button onclick="window.location.href='login.php'">Price descending</button>
-            <button onclick="window.location.href='login.php'">Rating</button>
-        </div>
         <div class="product-grid">
             <?php
             if ($result->num_rows > 0) {
@@ -359,10 +402,28 @@ $result = $conn->query($sql);
             ?>
         </div>
         <div class="pagination">
-            <button onclick="window.location.href='login.php'">&lt;</button>
-            <button onclick="window.location.href='login.php'">1</button>
-            <button onclick="window.location.href='login.php'">2</button>
-            <button onclick="window.location.href='login.php'">&gt;</button>
+            <?php if($page > 1): ?>
+                <a href="?page=<?php echo ($page-1); ?>">
+                    <button>&laquo; </button>
+                </a>
+            <?php endif; ?>
+            
+            <?php
+            // Show up to 5 page numbers
+            $start_page = max(1, $page - 2);
+            $end_page = min($total_pages, $start_page + 4);
+            
+            for($i = $start_page; $i <= $end_page; $i++): ?>
+                <a href="?page=<?php echo $i; ?>">
+                    <button <?php echo ($i == $page) ? 'class="active"' : ''; ?>><?php echo $i; ?></button>
+                </a>
+            <?php endfor; ?>
+            
+            <?php if($page < $total_pages): ?>
+                <a href="?page=<?php echo ($page+1); ?>">
+                    <button> &raquo;</button>
+                </a>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -390,4 +451,4 @@ $result = $conn->query($sql);
 </html>
 <?php
 $conn->close();
-?> 
+?>

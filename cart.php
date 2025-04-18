@@ -247,6 +247,22 @@ $result = $stmt->get_result();
             transition: opacity 0.5s ease;
             z-index: 1000;
         }
+        .cart-item-link {
+            display: block;
+            transition: transform 0.2s ease;
+        }
+
+        .cart-item-link:hover {
+            transform: scale(1.05);
+        }
+
+        .cart-item-link img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
         </style>
 </head>
 <body>
@@ -286,7 +302,11 @@ $result = $stmt->get_result();
                     $grand_total += $total;
                 ?>
                 <div class="cart-item">
-                    <img src="uploads/<?php echo htmlspecialchars($row['IMAGE']); ?>" alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>">
+                    <a href="viewdetail.php?product_id=<?php echo htmlspecialchars($row['product_id']); ?>" class="cart-item-link">
+                        <img src="uploads/<?php echo htmlspecialchars($row['IMAGE']); ?>" 
+                             alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>"
+                             title="Click to view details">
+                    </a>
                     <div class="cart-item-details">
                         <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
                         <p>Qty: <?php echo $row['quantity']; ?></p>

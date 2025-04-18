@@ -60,6 +60,20 @@ switch ($filter) {
         $sql .= " ORDER BY p.CREATED_AT DESC"; // Default sorting
 }
 
+// Pagination handling
+$items_per_page = 18;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $items_per_page;
+
+// Modify your SQL query to include LIMIT and OFFSET
+$count_sql = str_replace("p.*", "COUNT(*) as total", $sql);
+$total_result = $conn->query($count_sql);
+$total_rows = $total_result->fetch_assoc()['total'];
+$total_pages = ceil($total_rows / $items_per_page);
+
+// Add LIMIT to your existing SQL query
+$sql .= " LIMIT $items_per_page OFFSET $offset";
+
 $result = $conn->query($sql);
 ?>
 
@@ -250,20 +264,33 @@ $result = $conn->query($sql);
     cursor: pointer;
 }
 .pagination {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .pagination button {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            margin: 0 5px;
-            border-radius: 5px;
-        }
-        .pagination button:hover {
-            background-color: #b71c1c;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.pagination button {
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    margin: 0 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination button.active {
+    background-color: #b71c1c;
+    font-weight: bold;
+}
+
+.pagination button:hover {
+    background-color: #b71c1c;
+}
+
+.pagination a {
+    text-decoration: none;
 }
 
 .cta {
@@ -392,10 +419,28 @@ html {
             ?>
         </div>
         <div class="pagination">
-            <button>&laquo;</button>
-            <button>1</button>
-            <button>2</button>
-            <button>&raquo;</button>
+            <?php if($page > 1): ?>
+                <a href="?page=<?php echo ($page-1); ?>&filter=<?php echo $filter; ?>&category=<?php echo $category; ?>">
+                    <button>&laquo;</button>
+                </a>
+            <?php endif; ?>
+            
+            <?php
+            // Show up to 5 page numbers
+            $start_page = max(1, $page - 2);
+            $end_page = min($total_pages, $start_page + 4);
+            
+            for($i = $start_page; $i <= $end_page; $i++): ?>
+                <a href="?page=<?php echo $i; ?>&filter=<?php echo $filter; ?>&category=<?php echo $category; ?>">
+                    <button <?php echo ($i == $page) ? 'class="active"' : ''; ?>><?php echo $i; ?></button>
+                </a>
+            <?php endfor; ?>
+            
+            <?php if($page < $total_pages): ?>
+                <a href="?page=<?php echo ($page+1); ?>&filter=<?php echo $filter; ?>&category=<?php echo $category; ?>">
+                    <button> &raquo;</button>
+                </a>
+            <?php endif; ?>
         </div>
     </section>
 

@@ -82,11 +82,38 @@ if ($product_id) {
         .product-info {
             flex: 2;
         }
-        .product-info h1 {
+        .product-name {
             color: #d32f2f;
+            margin-bottom: 10px;
+            font-size: 32px;
         }
-        .product-info p {
+        .rating-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stars {
+            display: flex;
+            gap: 5px;
+        }
+        .stars .fa-star {
+            color: #ddd;
             font-size: 18px;
+        }
+        .stars .fa-star.active {
+            color: #ffc107;
+        }
+        .rating-count {
+            color: #666;
+            font-size: 14px;
+        }
+        .price {
+            font-size: 32px;
+            color: #d32f2f;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 20px;
         }
         .order-button {
             background-color: #d32f2f;
@@ -212,27 +239,6 @@ if ($product_id) {
             margin-bottom: 20px;
         }
 
-        .rating-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .stars .fa-star {
-            color: #ddd;
-        }
-
-        .stars .fa-star.active {
-            color: #ffc107;
-        }
-
-        .price {
-            font-size: 32px;
-            color: #d32f2f;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
         .quantity {
             margin-bottom: 20px;
         }
@@ -324,6 +330,19 @@ if ($product_id) {
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        .popup {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -358,30 +377,33 @@ if ($product_id) {
                 <img src="uploads/<?php echo htmlspecialchars($product['IMAGE']); ?>" alt="<?php echo htmlspecialchars($product['PROD_NAME']); ?>">
             </div>
             <div class="product-info">
-                <div class="product-header">
-                    <h1><?php echo htmlspecialchars($product['PROD_NAME']); ?></h1>
-                    <div class="rating-box">
-                        <div class="stars">
-                            <?php
-                            $rating = round($product['avg_rating'] ?? 0);
-                            for ($i = 1; $i <= 5; $i++) {
-                                echo '<i class="fas fa-star ' . ($i <= $rating ? 'active' : '') . '"></i>';
-                            }
-                            ?>
-                        </div>
-                        <span class="rating-count"><?php echo $product['review_count'] ?? 0; ?> Reviews</span>
+                <h1 class="product-name"><?php echo htmlspecialchars($product['PROD_NAME']); ?></h1>
+                <div class="rating-box">
+                    <div class="stars">
+                        <?php
+                        $rating = round($product['avg_rating'] ?? 0);
+                        for ($i = 1; $i <= 5; $i++) {
+                            echo '<i class="fas fa-star ' . ($i <= $rating ? 'active' : '') . '"></i>';
+                        }
+                        ?>
                     </div>
+                    <span class="rating-count"><?php echo $product['review_count'] ?? 0; ?> Reviews</span>
                 </div>
                 <div class="price">₱<?php echo number_format($product['PRICE'], 2); ?></div>
-                <div class="quantity">
-                    <label>Quantity:</label>
-                    <select name="quantity">
-                        <?php for($i=1; $i<=10; $i++): ?>
-                            <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                <button class="add-to-cart-btn">Add to Cart</button>
+                <form method="POST" action="add_to_cart.php" class="add-to-cart-form">
+                    <input type="hidden" name="product_id" value="<?php echo $product['PK_PRODUCT_ID']; ?>">
+                    <input type="hidden" name="product_name" value="<?php echo htmlspecialchars($product['PROD_NAME']); ?>">
+                    <input type="hidden" name="product_price" value="<?php echo $product['PRICE']; ?>">
+                    <div class="quantity">
+                        <label>Quantity:</label>
+                        <select name="quantity">
+                            <?php for($i=1; $i<=10; $i++): ?>
+                                <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+                </form>
                 
                 <div class="specs-section">
                     <h2>Specifications:</h2>
@@ -438,5 +460,49 @@ if ($product_id) {
             </div>
         </div>
     </div>
+    <script>
+    function showPopup(message) {
+        const popup = document.createElement('div');
+        popup.className = 'popup';
+        popup.innerText = message;
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            popup.style.opacity = '1';
+        }, 100);
+        
+        setTimeout(() => {
+            popup.style.opacity = '0';
+        }, 3000);
+        
+        setTimeout(() => {
+            document.body.removeChild(popup);
+        }, 3500);
+    }
+
+    // Handle form submission
+    document.querySelector('.add-to-cart-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch('add_to_cart.php', {
+            method: 'POST',
+            body: new FormData(this)
+        })
+        .then(response => response.text())
+        .then(data => {
+            showPopup('Product successfully added to cart');
+        })
+        .catch(error => {
+            showPopup('Error adding product to cart');
+        });
+    });
+
+    // Show popup if there's a message in URL
+    window.onload = function() {
+        <?php if (isset($_GET['message'])): ?>
+            showPopup("<?php echo htmlspecialchars($_GET['message']); ?>");
+        <?php endif; ?>
+    };
+    </script>
 </body>
 </html>
