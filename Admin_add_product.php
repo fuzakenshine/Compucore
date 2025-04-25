@@ -2,6 +2,12 @@
 session_start();
 include 'db_connect.php'; // Include the database connector
 
+$admin_id = $_SESSION['user_id'];
+$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
+$adminQuery->bind_param("i", $admin_id);
+$adminQuery->execute();
+$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prod_name = $_POST['prod_name'];
@@ -42,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product</title>
     <script>
@@ -65,23 +72,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .sidebar {
             width: 200px;
-            background: linear-gradient(to bottom, #d32f2f, #b71c1c);
-            color: white;
+            background-color: #d32f2f;
             height: 100vh;
             position: fixed;
+            color: white;
             display: flex;
             flex-direction: column;
             padding: 20px;
         }
+
+        .admin-profile {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .admin-profile h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
         .sidebar a {
+            display: flex;
+            align-items: center;
             color: white;
             text-decoration: none;
-            margin-bottom: 20px;
-            font-size: 18px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
         }
+
+        .sidebar a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
         .sidebar a:hover {
-            text-decoration: underline;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
         }
+
+        .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+        }
+
         .main-content {
             margin-left: 250px;
             padding: 20px;
@@ -205,10 +242,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="sidebar">
-        <a href="Admin_home.php">Home</a>
-        <a href="Admin_supplier.php">Suppliers</a>
-        <a href="Admin_product.php">Products</a>
-        <a href="login.php">Logout</a>
+        <div class="admin-profile">
+            <h3><?= htmlspecialchars($adminName) ?></h3>
+        </div>
+        <a href="Admin_home.php">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="Admin_orders.php">
+            <i class="fas fa-shopping-cart"></i> Orders
+        </a>
+        <a href="Admin_suppliers.php">
+            <i class="fas fa-truck"></i> Suppliers
+        </a>
+        <a href="Admin_product.php" class="active">
+            <i class="fas fa-box"></i> Products
+        </a>
+        <a href="Admin_customers.php">
+            <i class="fas fa-users"></i> Customers
+        </a>
+        <a href="logout.php" style="margin-top: auto;">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
     </div>
     <div class="main-content">
         <div class="header">

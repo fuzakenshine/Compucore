@@ -152,101 +152,165 @@ $result = $stmt->get_result();
             margin-left: 10px;
         }
         .cart-container {
-            padding: 20px;
-            margin-top: 50px; /* Adjust for fixed header */
-            margin-left: 40px;
+            max-width: 1200px;
+            margin: 80px auto 40px;
+            padding: 0 20px;
         }
+
         .cart-title {
-            font-size: 24px;
-            margin-bottom: 20px;
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+
         .cart-item {
             display: flex;
             align-items: center;
             background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 20px;
-            padding: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
         }
-        .cart-item img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-right: 20px;
+
+        .cart-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+
         .cart-item-details {
             flex: 1;
+            padding: 0 20px;
         }
+
         .cart-item-details h3 {
-            margin: 0;
             font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
         }
-        .cart-item-details p {
-            margin: 5px 0;
-            color: #555;
-        }
-        .cart-item-actions {
+
+        .quantity-controls {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-        .cart-item-actions button {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            margin-bottom: 5px;
-            border-radius: 5px;
-        }
-        .cart-item-actions button.cancel {
-            background-color: #ccc;
-            color: black;
-        }
-        .cart-item-actions button:hover {
-            opacity: 0.9;
-        }
-        .cta-banner {
-            text-align: center;
-            background-color: #d32f2f;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .cta-banner h2 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .cta-banner p {
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
             margin: 10px 0;
+            background: #f5f5f5;
+            border-radius: 25px;
+            padding: 5px;
+            width: fit-content;
         }
-        .cta-banner button {
-            background-color: white;
-            color: #d32f2f;
-            border: none;
-            padding: 10px 20px;
+
+        .quantity-controls button {
+            background: #fff;
+            border: 1px solid #ddd;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             cursor: pointer;
-            border-radius: 5px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .quantity-controls button:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .quantity-controls input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 0;
+            -moz-appearance: textfield;
+        }
+
+        .quantity-controls input::-webkit-outer-spin-button,
+        .quantity-controls input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .price-details {
+            margin-top: 10px;
             font-size: 16px;
         }
-        .cta-banner button:hover {
-            background-color: #f4f4f4;
+
+        .item-total {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .cart-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-row.total {
+            border-bottom: none;
+            font-size: 20px;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        .checkout-button {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        .checkout-button:hover {
+            background: #b71c1c;
         }
         .popup {
             position: fixed;
-            top: 60px;
+            top: 80px;
             right: 20px;
-            background-color:rgb(194, 40, 40);
+            background-color: #d32f2f;
             color: white;
-            padding: 15px;
+            padding: 15px 25px;
             border-radius: 5px;
-            opacity: 0;
-            transition: opacity 0.5s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
         }
+
+        .popup.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
         .cart-item-link {
             display: block;
             transition: transform 0.2s ease;
@@ -262,6 +326,87 @@ $result = $stmt->get_result();
             object-fit: cover;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .cart-item-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-left: 400px;
+        }
+
+        .cart-item-actions button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cart-item-actions button:first-child {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .cart-item-actions button:first-child:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .cart-item-actions .cancel {
+            background-color: #ff5252;
+            color: white;
+        }
+
+        .cart-item-actions .cancel:hover {
+            background-color: #ff1744;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .empty-cart {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 40px auto;
+            max-width: 400px;
+        }
+
+        .empty-cart i {
+            font-size: 80px;
+            color: #d32f2f;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .empty-cart p {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .continue-shopping {
+            background: #d32f2f;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .continue-shopping:hover {
+            background:rgb(172, 47, 47);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         </style>
 </head>
@@ -295,42 +440,84 @@ $result = $stmt->get_result();
         <h1 class="cart-title">🛒 My Cart</h1>
 
         <?php if ($result->num_rows > 0): ?>
-            <?php $grand_total = 0; ?>
+            <?php 
+            $grand_total = 0;
+            $total_items = 0;
+            ?>
             <?php while ($row = $result->fetch_assoc()): ?>
                 <?php
                     $total = $row['product_price'] * $row['quantity'];
                     $grand_total += $total;
+                    $total_items += $row['quantity'];
                 ?>
                 <div class="cart-item">
                     <a href="viewdetail.php?product_id=<?php echo htmlspecialchars($row['product_id']); ?>" class="cart-item-link">
                         <img src="uploads/<?php echo htmlspecialchars($row['IMAGE']); ?>" 
-                             alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>"
-                             title="Click to view details">
+                             alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>">
                     </a>
                     <div class="cart-item-details">
                         <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
-                        <p>Qty: <?php echo $row['quantity']; ?></p>
-                        <p>₱<?php echo number_format($row['product_price'], 2); ?></p>
+                        <div class="price-details">
+                            <p>Price: ₱<?php echo number_format($row['product_price'], 2); ?></p>
+                            <p class="item-total">Total: ₱<?php echo number_format($total, 2); ?></p>
+                        </div>
                     </div>
+                    
+                    <div class="quantity-controls">
+                        <button onclick="updateQuantity(<?php echo $row['cart_id']; ?>, 'decrease')">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" value="<?php echo $row['quantity']; ?>" 
+                               min="1" max="99" readonly
+                               onchange="updateQuantity(<?php echo $row['cart_id']; ?>, 'set', this.value)">
+                        <button onclick="updateQuantity(<?php echo $row['cart_id']; ?>, 'increase')">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
                     <div class="cart-item-actions">
-                        <form method="POST" action="order_now.php">
-                            <input type="hidden" name="cart_id" value="<?php echo htmlspecialchars($row['cart_id']); ?>">
-                            <button type="submit">Order Now</button>
-                        </form>
-                        <form method="POST" action="cancel_item.php" onsubmit="return confirmCancel();">
-                            <input type="hidden" name="cart_id" value="<?php echo htmlspecialchars($row['cart_id']); ?>">
-                            <button type="submit" class="cancel">Cancel</button>
-                        </form>
+                        <button onclick="orderNow(<?php echo $row['cart_id']; ?>)">
+                            <i class="fas fa-shopping-bag"></i> Order Now
+                        </button>
+                        <button class="cancel" onclick="cancelItem(<?php echo $row['cart_id']; ?>)">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
                     </div>
                 </div>
             <?php endwhile; ?>
-            <div class="cta-banner">
-                <h2>Enhance your PC performance!</h2>
-                <p>Enhance your PC performance with the perfect upgrade – we help you find the tools and components you need to unlock your system's full potential.</p>
-                <button>Place Order (₱<?php echo number_format($grand_total, 2); ?>)</button>
+
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Total Items:</span>
+                    <span><?php echo $total_items; ?> items</span>
+                </div>
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>₱<?php echo number_format($grand_total, 2); ?></span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping:</span>
+                    <span>Free</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span>₱<?php echo number_format($grand_total, 2); ?></span>
+                </div>
+                <button class="checkout-button" onclick="checkout()">
+                    Proceed to Checkout
+                </button>
             </div>
         <?php else: ?>
-            <p>Your cart is empty.</p>
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your shopping cart is empty</p>
+                <p style="font-size: 16px; color: #666; margin-bottom: 30px;">
+                    Looks like you haven't made your choice yet...
+                </p>
+                <a href="index.php" class="continue-shopping">
+                    <i></i> Start Shopping
+                </a>
+            </div>
         <?php endif; ?>
     </div>
 
@@ -343,20 +530,25 @@ $result = $stmt->get_result();
     function showPopup(message) {
         const popup = document.createElement('div');
         popup.className = 'popup';
-        popup.innerText = message;
+        popup.innerHTML = `
+            <i class="fas fa-info-circle"></i> 
+            ${message}
+        `;
         document.body.appendChild(popup);
 
+        // Force reflow
+        popup.offsetHeight;
+
+        // Add show class
+        popup.classList.add('show');
+
+        // Remove after 3 seconds
         setTimeout(() => {
-            popup.style.opacity = '1';
-        }, 100);
-        
-        setTimeout(() => {
-            popup.style.opacity = '0';
+            popup.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(popup);
+            }, 300);
         }, 3000);
-        
-        setTimeout(() => {
-            document.body.removeChild(popup);
-        }, 3500);
     }
 
     window.onload = function() {
@@ -364,6 +556,73 @@ $result = $stmt->get_result();
             showPopup("<?php echo htmlspecialchars($_GET['message']); ?>");
         <?php endif; ?>
     };
+
+    function updateQuantity(cartId, action, value = null) {
+        let formData = new FormData();
+        formData.append('cart_id', cartId);
+        formData.append('action', action);
+        if (value) formData.append('value', value);
+
+        fetch('update_cart_quantity.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showPopup(data.message || 'Error updating quantity');
+            }
+        })
+        .catch(error => {
+            showPopup('Error updating quantity');
+        });
+    }
+
+    function checkout() {
+        window.location.href = 'checkout.php';
+    }
+
+    function cancelItem(cartId) {
+        if (confirm("Are you sure you want to cancel this item?")) {
+            const formData = new FormData();
+            formData.append('cart_id', cartId);
+
+            fetch('cancel_item.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showPopup('Item cancelled successfully');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showPopup('Error cancelling item');
+                }
+            })
+            .catch(error => {
+                showPopup('Error cancelling item');
+            });
+        }
+    }
+    function orderNow(cartId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'ordernow.php';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'cart_id';
+    input.value = cartId;
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 
 </html>

@@ -4,7 +4,7 @@ include 'db_connect.php';
 
 // Ensure the user is logged in
 if (!isset($_SESSION['loggedin'])) {
-    header('Location: login.php');
+    echo json_encode(['success' => false, 'message' => 'Not logged in']);
     exit();
 }
 
@@ -12,13 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cart_id'])) {
     $cart_id = $_POST['cart_id'];
     $sql = "DELETE FROM cart WHERE cart_id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $cart_id);
     
-    if ($stmt->execute()) {
-        header('Location: cart.php?message=Item successfully cancelled');
+    if ($stmt->bind_param("i", $cart_id) && $stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Item cancelled successfully']);
     } else {
-        header('Location: cart.php?message=Error cancelling item');
+        echo json_encode(['success' => false, 'message' => 'Error cancelling item']);
     }
-    exit();
+} else {
+    echo json_encode(['success' => false, 'message' => 'Invalid request']);
 }
-?>

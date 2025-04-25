@@ -1,6 +1,13 @@
 <?php
-session_start();
+require_once 'includes/auth.php';
+checkAdminAccess();
 include 'db_connect.php'; 
+
+$admin_id = $_SESSION['user_id'];
+$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
+$adminQuery->bind_param("i", $admin_id);
+$adminQuery->execute();
+$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
 
 $sql = "SELECT o.PK_ORDER_ID, c.F_NAME, c.L_NAME, o.STATUS, o.TOTAL_PRICE, o.ORDER_DATE 
         FROM orders o
@@ -8,101 +15,150 @@ $sql = "SELECT o.PK_ORDER_ID, c.F_NAME, c.L_NAME, o.STATUS, o.TOTAL_PRICE, o.ORD
         ORDER BY o.ORDER_DATE DESC";
 $result = $conn->query($sql);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Orders</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
         }
+
         .sidebar {
             width: 200px;
             background-color: #d32f2f;
-            color: white;
             height: 100vh;
             position: fixed;
+            color: white;
             display: flex;
             flex-direction: column;
             padding: 20px;
         }
+
+        .admin-profile {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .admin-profile h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
         .sidebar a {
+            display: flex;
+            align-items: center;
             color: white;
             text-decoration: none;
-            margin-bottom: 20px;
-            font-size: 18px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
         }
+
+        .sidebar a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
         .sidebar a:hover {
-            text-decoration: underline;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
         }
-        .main-content {
+
+        .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .orders-section {
             margin-left: 250px;
             padding: 20px;
         }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
-        .header h1 {
+
+        .header h2 {
             margin: 0;
+            color: #333;
         }
-        .header button {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
+
+        .header input {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
             border-radius: 5px;
-        }   
-        .orders-section {
-            margin-left: 250px;
-            padding: 40px;
+            width: 200px;
         }
-        .orders-section h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .orders-section table {
+
+        table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .orders-section table th,
-        .orders-section table td {
+
+        table th,
+        table td {
             padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #eee;
         }
-        .orders-section table th {
-            color: #444;
+
+        table th {
+            background-color: #f8f9fa;
+            color: #333;
             font-weight: 600;
         }
-        .header button:hover {
-            background-color: #b71c1c;
+
+        table tr:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <a href="Admin_home.php">Home</a>
-        <a href="Admin_suppliers.php">Suppliers</a>
-        <a href="Admin_product.php">Products</a>
-        <a href="Admin_logout.php">Logout</a>
+    <div class="admin-profile">
+            <h3><?= htmlspecialchars($adminName) ?></h3>
+        </div>
+        <a href="Admin_home.php">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="Admin_orders.php" class="active">
+            <i class="fas fa-shopping-cart"></i> Orders
+        </a>
+        <a href="Admin_suppliers.php">
+            <i class="fas fa-truck"></i> Suppliers
+        </a>
+        <a href="Admin_product.php">
+            <i class="fas fa-box"></i> Products
+        </a>
+        <a href="Admin_customers.php">
+            <i class="fas fa-users"></i> Customers
+        </a>
+        <a href="logout.php" style="margin-top: auto;">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
     </div>
+
+    <!-- Keep existing orders-section content -->
     <div class="orders-section">
         <div class="header">
             <h2>Manage Orders</h2>
-            <input type="text" placeholder="Search..." style="padding: 5px; border-radius: 5px;">
+            <input type="text" placeholder="Search orders...">
         </div>
+        <!-- Keep existing table structure -->
         <table>
             <thead>
                 <tr>

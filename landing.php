@@ -283,36 +283,37 @@ $result = $conn->query($sql);
     padding: 5px 10px;
     cursor: pointer;
 }
-        .cta {
-            margin-left: 40px;
-            margin-right: 40px;
-            text-align: center;
-            background-image: url('uploads/cta.png');
-            border-radius: 0px;
-            background-size: cover;
-            color: white;
-            padding: 50px 20px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
+    .cta {
+        margin-left: 40px;
+        margin-right: 40px;
+        text-align: left;
+        background-image: url('uploads/cta.png');
+        background-size: cover;
+        color: white;
+        padding: 50px 20px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
 
-        .cta h2 {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
+    .cta h2 {
+        font-size: 36px;
+        margin-bottom: 10px;
+        margin-left: 40px;
+    }
 
-        .cta p {
-            font-size: 18px;
-            padding: 20px;
-        }
+    .cta p {
+        font-size: 18px;
+        margin-left: 40px;
+    }
 
-        .cta button {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-        }
+    .cta button {
+        margin-left: 40px; /* remove the previous left margin */
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
 
         .footer {
             text-align: center;

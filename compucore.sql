@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 18, 2025 at 04:21 PM
+-- Generation Time: Apr 18, 2025 at 07:36 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -28,21 +28,31 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `cart` (
+  `cart_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
   `product_name` varchar(255) NOT NULL,
-  `product_price` decimal(10,0) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `customer_id` int(11) NOT NULL
+  `product_price` decimal(10,2) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `customer_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `cart`
 --
 
-INSERT INTO `cart` (`product_id`, `product_name`, `product_price`, `quantity`, `customer_id`) VALUES
-(3, 'DRRM5 RAM', 1200, 2, 0),
-(11, 'RTX 3080 GRAPHIC CARD', 45000, 1, 0),
-(1, 'asda', 123123, 2, 0);
+INSERT INTO `cart` (`cart_id`, `product_id`, `product_name`, `product_price`, `quantity`, `customer_id`, `created_at`) VALUES
+(2, 3, 'DRRM5 RAM', 1200.00, 1, 1, '2025-04-18 15:28:26'),
+(3, 1, 'asda', 123123.00, 2, 1, '2025-04-18 15:28:26'),
+(8, 4, 'White GPU', 1200.00, 1, 1, '2025-04-18 15:28:26'),
+(9, 9, 'Hard Casing White Astro 2025', 10000.00, 1, 1, '2025-04-18 15:28:26'),
+(10, 5, 'mOBO', 1000.00, 1, 1, '2025-04-18 15:28:26'),
+(11, 12, 'RGBiot GAMING HARD CASE', 2000.00, 2, 1, '2025-04-18 16:57:32'),
+(14, 11, 'RTX 3080 GRAPHIC CARD', 45000.00, 3, 1, '2025-04-18 16:56:51'),
+(16, 7, 'Mouse Matte Black', 1000.00, 2, 1, '2025-04-18 16:54:47'),
+(17, 10, 'MSI Router', 12000.00, 4, 1, '2025-04-18 17:33:27'),
+(18, 13, 'ROG Mobo 2030M', 10000.00, 2, 1, '2025-04-18 17:01:14'),
+(19, 18, 'GEFORCE GTX ', 30000.00, 1, 1, '2025-04-18 17:33:40');
 
 -- --------------------------------------------------------
 
@@ -64,7 +74,29 @@ CREATE TABLE `categories` (
 INSERT INTO `categories` (`PK_CATEGORY_ID`, `CAT_NAME`, `CAT_DESC`, `CREATED_AT`) VALUES
 (1, 'Monitors', 'Display devices for computers', '2025-04-16 23:56:48'),
 (2, 'Graphics Cards', 'Hardware for rendering images', '2025-04-16 23:56:48'),
-(3, 'Motherboards', 'Main circuit boards for computers', '2025-04-16 23:56:48');
+(3, 'Motherboards', 'Main circuit boards for computers', '2025-04-16 23:56:48'),
+(4, 'Processors', 'Central processing units for computing tasks', '2025-04-18 23:53:18'),
+(5, 'RAM', 'Volatile memory for temporary data storage', '2025-04-18 23:53:18'),
+(6, 'Storage Drives', 'Permanent storage devices like SSDs and HDDs', '2025-04-18 23:53:18'),
+(7, 'Power Supply Units', 'Provide power to all PC components', '2025-04-18 23:53:18'),
+(8, 'Computer Cases', 'Enclosures for housing computer parts', '2025-04-18 23:53:18'),
+(9, 'Cooling Systems', 'Solutions for dissipating heat', '2025-04-18 23:53:18'),
+(10, 'Sound Cards', 'Enhance or provide audio input/output capabilities', '2025-04-18 23:53:18'),
+(11, 'Network Cards', 'Enable network connectivity', '2025-04-18 23:53:18'),
+(12, 'Optical Drives', 'Read/write CDs, DVDs, Blu-rays', '2025-04-18 23:53:18'),
+(13, 'Keyboards', 'Input devices for typing', '2025-04-18 23:53:18'),
+(14, 'Mice', 'Pointing input devices', '2025-04-18 23:53:18'),
+(15, 'Speakers', 'Output devices for audio', '2025-04-18 23:53:18'),
+(16, 'Webcams', 'Cameras for video capture and conferencing', '2025-04-18 23:53:18'),
+(17, 'Printers', 'Devices for producing physical copies of digital content', '2025-04-18 23:53:18'),
+(18, 'UPS', 'Backup power sources during outages', '2025-04-18 23:53:18'),
+(19, 'Fans', 'Cooling fans for airflow inside cases', '2025-04-18 23:53:18'),
+(20, 'Cables & Adapters', 'Connectivity and conversion components', '2025-04-18 23:53:18'),
+(21, 'Expansion Cards', 'Additional functionalities like USB, Firewire, etc.', '2025-04-18 23:53:18'),
+(22, 'Capture Cards', 'Record video input from external sources', '2025-04-18 23:53:18'),
+(23, 'VR Headsets', 'Virtual reality devices', '2025-04-18 23:53:18'),
+(24, 'Docking Stations', 'Multi-port hubs for laptops or tablets', '2025-04-18 23:53:18'),
+(25, 'External Storage', 'Portable drives like USB HDDs or SSDs', '2025-04-18 23:53:18');
 
 -- --------------------------------------------------------
 
@@ -147,6 +179,7 @@ CREATE TABLE `products` (
   `FK2_SUPPLIER_ID` int(11) NOT NULL,
   `PROD_NAME` varchar(255) NOT NULL,
   `PROD_DESC` varchar(255) NOT NULL,
+  `PROD_SPECS` text DEFAULT NULL,
   `PRICE` decimal(10,2) NOT NULL,
   `QTY` int(11) NOT NULL DEFAULT 0,
   `IMAGE` varchar(255) NOT NULL,
@@ -158,20 +191,43 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `PROD_NAME`, `PROD_DESC`, `PRICE`, `QTY`, `IMAGE`, `CREATED_AT`, `UPDATED_AT`) VALUES
-(1, 2, 1, 'asda', '1', 123123.00, 1, 'p5.png', '2025-04-17 00:03:03', '2025-04-17 00:03:03'),
-(2, 1, 1, 'ASUS', 'The best of the Best ', 1200.00, 3, 'p3.png', '2025-04-17 00:32:56', '2025-04-17 00:32:56'),
-(3, 2, 1, 'DRRM5 RAM', 'RAM FOR BETTER EXPERIENCE', 1200.00, 5, 'p6.png', '2025-04-17 22:03:18', '2025-04-17 22:03:18'),
-(4, 2, 1, 'White GPU', 'WHITE ', 1200.00, 5, 'p1.png', '2025-04-17 22:46:11', '2025-04-17 22:46:11'),
-(5, 3, 1, 'mOBO', 'EWEW', 1000.00, 3, 'p4.png', '2025-04-17 23:02:01', '2025-04-17 23:02:01'),
-(6, 1, 1, 'Mousepad', 'Gaming mousepad', 200.00, 20, 'Flowy Waves Desk Mat, XXL Gaming Mouse Pad, Blue Water Mousepad, Beautiful Nature Desk Mat.jpg', '2025-04-18 02:07:15', '2025-04-18 02:07:15'),
-(7, 1, 1, 'Mouse Matte Black', 'Good for Office Works and light works', 1000.00, 20, 'Amazon_com_ Dapesuom Small Mouse Pad 6 x 8 Inch….jpg', '2025-04-18 02:08:00', '2025-04-18 02:08:00'),
-(8, 1, 1, 'Black Sticky Mousepad', 'Black mousepad for better gaming', 450.00, 20, 'DIGSOM Mouse Pad.jpg', '2025-04-18 02:08:40', '2025-04-18 02:08:40'),
-(9, 1, 2, 'Hard Casing White Astro 2025', 'For better', 10000.00, 10, 'Transform your product into a captivating visual experience with 3D product animation!.jpg', '2025-04-18 02:09:35', '2025-04-18 02:09:35'),
-(10, 1, 2, 'MSI Router', 'For better Wifi Experience', 12000.00, 20, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-18 02:10:13', '2025-04-18 02:10:13'),
-(11, 2, 2, 'RTX 3080 GRAPHIC CARD', 'GOOD FOR GAMING EXPERIENCE', 45000.00, 10, 'Video game graphics are a ticking time bomb — the industry needs to focus on art over tech.jpg', '2025-04-18 02:10:51', '2025-04-18 02:10:51'),
-(12, 1, 2, 'RGBiot GAMING HARD CASE', '-Good for eyes', 2000.00, 30, 'Custom build Gaming PC.jpg', '2025-04-18 02:11:47', '2025-04-18 02:11:47'),
-(13, 3, 2, 'ROG Mobo 2030M', 'Good for gaming', 10000.00, 10, 'ROG STRIX Z490-E GAMING _ Motherboards _ ROG Global.jpg', '2025-04-18 02:12:39', '2025-04-18 02:12:39');
+INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `PROD_NAME`, `PROD_DESC`, `PROD_SPECS`, `PRICE`, `QTY`, `IMAGE`, `CREATED_AT`, `UPDATED_AT`) VALUES
+(1, 2, 1, 'asda', '1', NULL, 123123.00, 1, 'p5.png', '2025-04-17 00:03:03', '2025-04-17 00:03:03'),
+(2, 1, 1, 'ASUS', 'The best of the Best ', NULL, 1200.00, 3, 'p3.png', '2025-04-17 00:32:56', '2025-04-17 00:32:56'),
+(3, 2, 1, 'DRRM5 RAM', 'RAM FOR BETTER EXPERIENCE', NULL, 1200.00, 5, 'p6.png', '2025-04-17 22:03:18', '2025-04-17 22:03:18'),
+(4, 2, 1, 'White GPU', 'WHITE ', NULL, 1200.00, 5, 'p1.png', '2025-04-17 22:46:11', '2025-04-17 22:46:11'),
+(5, 3, 1, 'mOBO', 'EWEW', NULL, 1000.00, 3, 'p4.png', '2025-04-17 23:02:01', '2025-04-17 23:02:01'),
+(6, 1, 1, 'Mousepad', 'Gaming mousepad', NULL, 200.00, 20, 'Flowy Waves Desk Mat, XXL Gaming Mouse Pad, Blue Water Mousepad, Beautiful Nature Desk Mat.jpg', '2025-04-18 02:07:15', '2025-04-18 02:07:15'),
+(7, 1, 1, 'Mouse Matte Black', 'Good for Office Works and light works', NULL, 1000.00, 20, 'Amazon_com_ Dapesuom Small Mouse Pad 6 x 8 Inch….jpg', '2025-04-18 02:08:00', '2025-04-18 02:08:00'),
+(8, 1, 1, 'Black Sticky Mousepad', 'Black mousepad for better gaming', NULL, 450.00, 20, 'DIGSOM Mouse Pad.jpg', '2025-04-18 02:08:40', '2025-04-18 02:08:40'),
+(9, 1, 2, 'Hard Casing White Astro 2025', 'For better', NULL, 10000.00, 10, 'Transform your product into a captivating visual experience with 3D product animation!.jpg', '2025-04-18 02:09:35', '2025-04-18 02:09:35'),
+(10, 1, 2, 'MSI Router', 'For better Wifi Experience', NULL, 12000.00, 20, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-18 02:10:13', '2025-04-18 02:10:13'),
+(11, 2, 2, 'RTX 3080 GRAPHIC CARD', 'GOOD FOR GAMING EXPERIENCE', NULL, 45000.00, 10, 'Video game graphics are a ticking time bomb — the industry needs to focus on art over tech.jpg', '2025-04-18 02:10:51', '2025-04-18 02:10:51'),
+(12, 1, 2, 'RGBiot GAMING HARD CASE', '-Good for eyes', NULL, 2000.00, 30, 'Custom build Gaming PC.jpg', '2025-04-18 02:11:47', '2025-04-18 02:11:47'),
+(13, 3, 2, 'ROG Mobo 2030M', 'Good for gaming', NULL, 10000.00, 10, 'ROG STRIX Z490-E GAMING _ Motherboards _ ROG Global.jpg', '2025-04-18 02:12:39', '2025-04-18 02:12:39'),
+(14, 5, 0, 'HyperX RAM 16GB', '-RGB HYPERX 16GB RAM', '-BLACK\r\n-PURPLE\r\n-RED\r\n-WWHITE', 5000.00, 10, 'The best RAM of 2024_ top memory for your PC.jpg', '2025-04-19 00:29:45', '2025-04-19 00:29:45'),
+(15, 5, 0, 'Corsair coolant fan', 'Best for gaming 123', '-white\r\n-black\r\n-pink\r\n-blue', 20000.00, 10, 'Corsair Dominator Platinum RGB Series.jpg', '2025-04-19 01:09:28', '2025-04-19 01:09:28'),
+(16, 13, 2, 'Keyboard GYA', 'Best for gaming', '-keyboard\r\n-blue\r\n-white\r\n-rgb', 2000.00, 30, 'gaming keyboard.jpg', '2025-04-19 01:10:16', '2025-04-19 01:10:16'),
+(17, 2, 1, 'RTX 3080 ', 'Best for gaming', '-white\r\n-with fan\r\n', 45000.00, 10, 'white graphic card.jpg', '2025-04-19 01:11:04', '2025-04-19 01:11:04'),
+(18, 2, 0, 'GEFORCE GTX ', 'Best for gaming', '-green\r\n-gray\r\n-black', 30000.00, 10, 'db839bf5-d42b-4a59-b48d-6f8f5f3c31fc.jpg', '2025-04-19 01:12:52', '2025-04-19 01:12:52'),
+(19, 19, 1, 'Coolant fan', 'Best for coolants', '-simple\r\n-neat', 2000.00, 10, 'SST-AR04.jpg', '2025-04-19 01:13:27', '2025-04-19 01:13:27');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reviews`
+--
+
+CREATE TABLE `reviews` (
+  `PK_REVIEW_ID` int(11) NOT NULL,
+  `FK1_CUSTOMER_ID` int(11) NOT NULL,
+  `FK2_PRODUCT_ID` int(11) NOT NULL,
+  `FK3_ORDER_ID` int(11) NOT NULL,
+  `RATING` int(11) NOT NULL,
+  `COMMENT` text DEFAULT NULL,
+  `CREATED_AT` datetime DEFAULT current_timestamp(),
+  `IMAGE` varchar(255) DEFAULT NULL
+) ;
 
 -- --------------------------------------------------------
 
@@ -233,6 +289,14 @@ INSERT INTO `users` (`PK_USER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`,
 --
 
 --
+-- Indexes for table `cart`
+--
+ALTER TABLE `cart`
+  ADD PRIMARY KEY (`cart_id`),
+  ADD KEY `product_id` (`product_id`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
 -- Indexes for table `categories`
 --
 ALTER TABLE `categories`
@@ -277,6 +341,15 @@ ALTER TABLE `products`
   ADD KEY `FK2_SUPPLIER_ID` (`FK2_SUPPLIER_ID`);
 
 --
+-- Indexes for table `reviews`
+--
+ALTER TABLE `reviews`
+  ADD PRIMARY KEY (`PK_REVIEW_ID`),
+  ADD KEY `FK1_CUSTOMER_ID` (`FK1_CUSTOMER_ID`),
+  ADD KEY `FK2_PRODUCT_ID` (`FK2_PRODUCT_ID`),
+  ADD KEY `FK3_ORDER_ID` (`FK3_ORDER_ID`);
+
+--
 -- Indexes for table `supplier`
 --
 ALTER TABLE `supplier`
@@ -295,6 +368,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `cart`
+--
+ALTER TABLE `cart`
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
@@ -304,11 +383,24 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `reviews`
+--
+ALTER TABLE `reviews`
+  MODIFY `PK_REVIEW_ID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `cart`
+--
+ALTER TABLE `cart`
+  ADD CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`PK_PRODUCT_ID`),
+  ADD CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`PK_CUSTOMER_ID`);
 
 --
 -- Constraints for table `orders`
@@ -331,6 +423,14 @@ ALTER TABLE `order_detail`
 ALTER TABLE `products`
   ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`FK1_CATEGORY_ID`) REFERENCES `categories` (`PK_CATEGORY_ID`),
   ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`FK2_SUPPLIER_ID`) REFERENCES `supplier` (`PK_SUPPLIER_ID`);
+
+--
+-- Constraints for table `reviews`
+--
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`FK1_CUSTOMER_ID`) REFERENCES `customer` (`PK_CUSTOMER_ID`),
+  ADD CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`FK2_PRODUCT_ID`) REFERENCES `products` (`PK_PRODUCT_ID`),
+  ADD CONSTRAINT `reviews_ibfk_3` FOREIGN KEY (`FK3_ORDER_ID`) REFERENCES `orders` (`PK_ORDER_ID`);
 
 --
 -- Constraints for table `supplier`

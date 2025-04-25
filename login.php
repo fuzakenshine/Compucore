@@ -1,40 +1,53 @@
 <?php
 session_start();
-include 'db_connect.php'; // Include the database connector
+include 'db_connect.php';
 
-// Handle login form submission
-if (isset($_POST['email'], $_POST['password'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Fetch customer from the database
-    $sql = "SELECT * FROM CUSTOMER WHERE EMAIL = ?";
-    $stmt = $conn->prepare($sql);
+    // Try admin login first
+    $stmt = $conn->prepare("SELECT * FROM users WHERE EMAIL = ? AND IS_ADMIN = 1");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        
+        if (password_verify($password, $user['PASSWORD_HASH'])) {
+            $_SESSION['loggedin'] = true;
+            $_SESSION['user_id'] = $user['PK_USER_ID'];
+            $_SESSION['email'] = $user['EMAIL'];
+            $_SESSION['is_admin'] = 1;
+            header("Location: Admin_home.php");
+            exit();
+        }
+    }
+
+    // If not admin, check customer table (keep your existing customer login code)
+    $stmt = $conn->prepare("SELECT * FROM customer WHERE EMAIL = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    if ($result->num_rows === 1) {
+    if ($result->num_rows > 0) {
         $customer = $result->fetch_assoc();
-
-        // Verify password
         if (password_verify($password, $customer['PASSWORD_HASH'])) {
-            // Set session variables
-            $_SESSION['customer_id'] = $customer['PK_CUSTOMER_ID'];
-            $_SESSION['customer_name'] = $customer['F_NAME'] . ' ' . $customer['L_NAME'];
             $_SESSION['loggedin'] = true;
-
-            // Redirect to dashboard or home page
-            header('Location: index.php');
-            exit;
-        } else {
-            $error = "Invalid email or password.";
+            $_SESSION['customer_id'] = $customer['PK_CUSTOMER_ID'];
+            $_SESSION['email'] = $customer['EMAIL'];
+            header("Location: index.php");
+            exit();
         }
-    } else {
-        $error = "Invalid email or password.";
     }
+
+    $_SESSION['error'] = "Invalid email or password";
+    header("Location: login.php");
+    exit();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -156,8 +169,8 @@ if (isset($_POST['email'], $_POST['password'])) {
     </div>
         <h1>Enhance your PC performance!</h1>
         <form method="POST">
-            <?php if (isset($error)): ?>
-                <div class="error"><?php echo $error; ?></div>
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
             <?php endif; ?>
             <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Password" required>
