@@ -167,6 +167,40 @@ $result = $conn->query($sql);
             font-size: 18px;
         }
 
+        .product-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .edit-btn, .delete-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
         .pagination {
             display: flex;
             justify-content: center;
@@ -207,6 +241,114 @@ $result = $conn->query($sql);
             color: #999;
             cursor: not-allowed;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.primary {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            background-color: #1976D2;
+        }
+
+        .modal-btn.danger {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .modal-btn.danger:hover {
+            background-color: #d32f2f;
+        }
+
+        .modal-btn.secondary {
+            background-color: #9e9e9e;
+            color: white;
+        }
+
+        .modal-btn.secondary:hover {
+            background-color: #757575;
+        }
     </style>
 </head>
 <body>
@@ -229,7 +371,7 @@ $result = $conn->query($sql);
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
         </a>
-        <a href="logout.php" style="margin-top: auto;">
+        <a href="logout.php">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
@@ -246,6 +388,14 @@ $result = $conn->query($sql);
                         <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
                         <p>₱<?php echo number_format($row['PRICE'], 2); ?></p>
                         <p>Qty: <?php echo $row['QTY']; ?></p>
+                        <div class="product-actions">
+                            <button class="edit-btn" onclick="editProduct(<?php echo $row['PK_PRODUCT_ID']; ?>, '<?php echo htmlspecialchars($row['PROD_NAME']); ?>', <?php echo $row['QTY']; ?>, <?php echo $row['PRICE']; ?>)">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="delete-btn" onclick="deleteProduct(<?php echo $row['PK_PRODUCT_ID']; ?>)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
@@ -292,5 +442,103 @@ $result = $conn->query($sql);
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Edit Product Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+            <h2 class="modal-title">Edit Product</h2>
+            <form id="editForm" class="modal-form" method="POST">
+                <input type="hidden" id="editProductId" name="product_id">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="editProductName" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="editQty">Quantity</label>
+                    <input type="number" id="editQty" name="qty" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPrice">Price (₱)</label>
+                    <input type="number" id="editPrice" name="price" min="0" step="0.01" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn secondary" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" class="modal-btn primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Product Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+            <h2 class="modal-title">Delete Product</h2>
+            <p>Are you sure you want to delete this product?</p>
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button type="button" class="modal-btn danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProductId = null;
+
+        function editProduct(productId, productName, qty, price) {
+            currentProductId = productId;
+            document.getElementById('editProductId').value = productId;
+            document.getElementById('editProductName').value = productName;
+            document.getElementById('editQty').value = qty;
+            document.getElementById('editPrice').value = price;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function deleteProduct(productId) {
+            currentProductId = productId;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function confirmDelete() {
+            if (currentProductId) {
+                window.location.href = 'Admin_delete_product.php?id=' + currentProductId;
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Handle edit form submission
+        document.getElementById('editForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.append('product_id', currentProductId);
+
+            fetch('Admin_edit_product.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error updating product: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error updating product: ' + error);
+            });
+        };
+    </script>
 </body>
 </html>

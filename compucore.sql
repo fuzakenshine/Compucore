@@ -136,9 +136,10 @@ CREATE TABLE `orders` (
   `FK2_PAYMENT_ID` int(11) NOT NULL,
   `FK3_USER_ID` int(11) NOT NULL,
   `TOTAL_PRICE` decimal(10,2) NOT NULL,
-  `STATUS` char(15) NOT NULL,
+  `STATUS` ENUM('Pending', 'Approved', 'Shipped', 'Received', 'Completed', 'Rejected') NOT NULL DEFAULT 'Pending',
   `ORDER_DATE` datetime NOT NULL DEFAULT current_timestamp(),
-  `LINE_TOTAL` decimal(10,2) NOT NULL
+  `LINE_TOTAL` decimal(10,2) NOT NULL,
+  `SHIPPING_METHOD` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

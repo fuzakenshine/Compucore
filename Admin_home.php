@@ -169,7 +169,7 @@ for ($month = 1; $month <= 12; $month++) {
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
         </a>
-        <a href="logout.php" style="margin-top: auto;">
+        <a href="logout.php">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>

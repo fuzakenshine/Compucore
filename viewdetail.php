@@ -460,6 +460,7 @@ if ($product_id) {
             </div>
         </div>
     </div>
+    <?php include 'footer.php'; ?>
     <script>
     function showPopup(message) {
         const popup = document.createElement('div');

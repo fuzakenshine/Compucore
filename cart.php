@@ -167,19 +167,58 @@ $result = $stmt->get_result();
         }
 
         .cart-item {
-            display: flex;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 20px;
             align-items: center;
             background-color: white;
             border-radius: 12px;
             margin-bottom: 20px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
         }
 
         .cart-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background-color: #fafafa;
+        }
+
+        .cart-item.selected {
+            background-color: #fff5f5;
+            border: 1px solid #ffcdd2;
+        }
+
+        .cart-item-checkbox {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .cart-item-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .cart-item-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            pointer-events: none;
+            flex: 1;
+        }
+
+        .cart-item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .cart-item-details {
@@ -193,16 +232,77 @@ $result = $stmt->get_result();
             color: #333;
         }
 
+        .price-details {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .item-total {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            z-index: 2;
+        }
+
         .quantity-controls {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 3px;
-            margin: 10px 0;
             background: #f5f5f5;
             border-radius: 25px;
             padding: 5px;
             width: fit-content;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2;
+        }
+
+        .cart-item-actions button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cart-item-actions button:first-child {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .cart-item-actions button:first-child:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .cart-item-actions .cancel {
+            background-color: #ff5252;
+            color: white;
+        }
+
+        .cart-item-actions .cancel:hover {
+            background-color: #ff1744;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .quantity-controls button {
@@ -239,17 +339,6 @@ $result = $stmt->get_result();
         .quantity-controls input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
-        }
-
-        .price-details {
-            margin-top: 10px;
-            font-size: 16px;
-        }
-
-        .item-total {
-            color: #d32f2f;
-            font-weight: bold;
-            font-size: 18px;
         }
 
         .cart-summary {
@@ -311,64 +400,6 @@ $result = $stmt->get_result();
             transform: translateX(0);
         }
 
-        .cart-item-link {
-            display: block;
-            transition: transform 0.2s ease;
-        }
-
-        .cart-item-link:hover {
-            transform: scale(1.05);
-        }
-
-        .cart-item-link img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cart-item-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-left: 400px;
-        }
-
-        .cart-item-actions button {
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            border: none;
-            transition: all 0.3s ease;
-            min-width: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .cart-item-actions button:first-child {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .cart-item-actions button:first-child:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .cart-item-actions .cancel {
-            background-color: #ff5252;
-            color: white;
-        }
-
-        .cart-item-actions .cancel:hover {
-            background-color: #ff1744;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
         .empty-cart {
             text-align: center;
             padding: 60px 20px;
@@ -450,37 +481,38 @@ $result = $stmt->get_result();
                     $grand_total += $total;
                     $total_items += $row['quantity'];
                 ?>
-                <div class="cart-item">
-                    <a href="viewdetail.php?product_id=<?php echo htmlspecialchars($row['product_id']); ?>" class="cart-item-link">
+                <div class="cart-item" onclick="toggleItemSelection(this)">
+                    <div class="cart-item-checkbox">
+                        <input type="checkbox" class="item-checkbox" name="selected_items[]" value="<?php echo $row['cart_id']; ?>" onclick="event.stopPropagation();">
+                    </div>
+                    <div class="cart-item-content">
                         <img src="uploads/<?php echo htmlspecialchars($row['IMAGE']); ?>" 
-                             alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>">
-                    </a>
-                    <div class="cart-item-details">
-                        <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
-                        <div class="price-details">
-                            <p>Price: ₱<?php echo number_format($row['product_price'], 2); ?></p>
-                            <p class="item-total">Total: ₱<?php echo number_format($total, 2); ?></p>
+                             alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>"
+                             class="cart-item-image">
+                        <div class="cart-item-details">
+                            <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
+                            <div class="price-details">
+                                <p>Price: ₱<?php echo number_format($row['product_price'], 2); ?></p>
+                                <p class="item-total">Total: ₱<?php echo number_format($total, 2); ?></p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="quantity-controls">
-                        <button onclick="updateQuantity(<?php echo $row['cart_id']; ?>, 'decrease')">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <input type="number" value="<?php echo $row['quantity']; ?>" 
-                               min="1" max="99" readonly
-                               onchange="updateQuantity(<?php echo $row['cart_id']; ?>, 'set', this.value)">
-                        <button onclick="updateQuantity(<?php echo $row['cart_id']; ?>, 'increase')">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <div class="cart-item-controls">
+                        <div class="quantity-controls">
+                            <button onclick="event.stopPropagation(); updateQuantity(<?php echo $row['cart_id']; ?>, 'decrease')">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" value="<?php echo $row['quantity']; ?>" 
+                                   min="1" max="99" readonly
+                                   onchange="event.stopPropagation(); updateQuantity(<?php echo $row['cart_id']; ?>, 'set', this.value)">
+                            <button onclick="event.stopPropagation(); updateQuantity(<?php echo $row['cart_id']; ?>, 'increase')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
-                    
                     <div class="cart-item-actions">
-                        <button onclick="orderNow(<?php echo $row['cart_id']; ?>)">
-                            <i class="fas fa-shopping-bag"></i> Order Now
-                        </button>
-                        <button class="cancel" onclick="cancelItem(<?php echo $row['cart_id']; ?>)">
-                            <i class="fas fa-times"></i> Cancel
+                        <button class="cancel" onclick="event.stopPropagation(); cancelItem(<?php echo $row['cart_id']; ?>)" style="background-color: red; color: white;">
+                            <i class="fas fa-trash"></i> Delete
                         </button>
                     </div>
                 </div>
@@ -488,22 +520,18 @@ $result = $stmt->get_result();
 
             <div class="cart-summary">
                 <div class="summary-row">
+                    <span>Selected Items:</span>
+                    <span id="selected-items-count">0 items</span>
+                </div>
+                <div class="summary-row">
                     <span>Total Items:</span>
                     <span><?php echo $total_items; ?> items</span>
                 </div>
-                <div class="summary-row">
-                    <span>Subtotal:</span>
-                    <span>₱<?php echo number_format($grand_total, 2); ?></span>
-                </div>
-                <div class="summary-row">
-                    <span>Shipping:</span>
-                    <span>Free</span>
-                </div>
                 <div class="summary-row total">
                     <span>Total:</span>
-                    <span>₱<?php echo number_format($grand_total, 2); ?></span>
+                    <span id="selected-total">₱0.00</span>
                 </div>
-                <button class="checkout-button" onclick="checkout()">
+                <button class="checkout-button" onclick="checkout()" id="checkout-button" disabled>
                     Proceed to Checkout
                 </button>
             </div>
@@ -520,11 +548,11 @@ $result = $stmt->get_result();
             </div>
         <?php endif; ?>
     </div>
-
+    <?php include 'footer.php'; ?>
 </body>
 <script>
     function confirmCancel() {
-        return confirm("Are you sure you want to cancel this item?");
+        return confirm("Are you sure you want to remove this item?");
     }
 
     function showPopup(message) {
@@ -558,6 +586,10 @@ $result = $stmt->get_result();
     };
 
     function updateQuantity(cartId, action, value = null) {
+        // Store checked items before update
+        const checkedItems = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+            .map(checkbox => checkbox.value);
+
         let formData = new FormData();
         formData.append('cart_id', cartId);
         formData.append('action', action);
@@ -570,6 +602,8 @@ $result = $stmt->get_result();
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Store checked items in sessionStorage before reload
+                sessionStorage.setItem('checkedItems', JSON.stringify(checkedItems));
                 location.reload();
             } else {
                 showPopup(data.message || 'Error updating quantity');
@@ -580,8 +614,80 @@ $result = $stmt->get_result();
         });
     }
 
+    function updateSelectedItems() {
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        const selectedCount = document.querySelectorAll('.item-checkbox:checked').length;
+        const selectedItemsCount = document.getElementById('selected-items-count');
+        const checkoutButton = document.getElementById('checkout-button');
+        const selectedTotal = document.getElementById('selected-total');
+        
+        let total = 0;
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const cartItem = checkbox.closest('.cart-item');
+                const priceText = cartItem.querySelector('.price-details p:first-child').textContent;
+                const quantity = parseInt(cartItem.querySelector('.quantity-controls input').value);
+                
+                // Extract price from "Price: ₱X,XXX.XX" format
+                const price = parseFloat(priceText.replace('Price: ₱', '').replace(/,/g, ''));
+                
+                if (!isNaN(price) && !isNaN(quantity)) {
+                    total += price * quantity;
+                }
+            }
+        });
+
+        selectedItemsCount.textContent = `${selectedCount} items`;
+        selectedTotal.textContent = `₱${total.toFixed(2)}`;
+        checkoutButton.disabled = selectedCount === 0;
+    }
+
+    function toggleItemSelection(cartItem) {
+        const checkbox = cartItem.querySelector('.item-checkbox');
+        checkbox.checked = !checkbox.checked;
+        cartItem.classList.toggle('selected', checkbox.checked);
+        updateSelectedItems();
+    }
+
+    // Update the DOMContentLoaded event listener
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const cartItem = this.closest('.cart-item');
+                cartItem.classList.toggle('selected', this.checked);
+                updateSelectedItems();
+            });
+        });
+
+        // Restore checked items after page load
+        const checkedItems = JSON.parse(sessionStorage.getItem('checkedItems') || '[]');
+        checkedItems.forEach(cartId => {
+            const checkbox = document.querySelector(`.item-checkbox[value="${cartId}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.closest('.cart-item').classList.add('selected');
+            }
+        });
+        
+        // Clear the stored items
+        sessionStorage.removeItem('checkedItems');
+        
+        // Update the totals for restored checkboxes
+        updateSelectedItems();
+    });
+
     function checkout() {
-        window.location.href = 'checkout.php';
+        const selectedItems = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+            .map(checkbox => checkbox.value);
+        
+        if (selectedItems.length === 0) {
+            showPopup('Please select at least one item to checkout');
+            return;
+        }
+
+        // Pass selected items to checkout page
+        window.location.href = 'checkout.php?selected_items=' + selectedItems.join(',');
     }
 
     function cancelItem(cartId) {

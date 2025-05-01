@@ -1,0 +1,8 @@
+-- Add AUTO_INCREMENT to orders table
+ALTER TABLE `orders` MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT;
+
+-- Add AUTO_INCREMENT to payments table
+ALTER TABLE `payments` MODIFY `PK_PAYMENT_ID` int(11) NOT NULL AUTO_INCREMENT;
+
+-- Add AUTO_INCREMENT to order_detail table
+ALTER TABLE `order_detail` MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT; 

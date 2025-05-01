@@ -87,272 +87,326 @@ $result = $conn->query($sql);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f5f5f5;
+        }
 
+        .hero {
+            text-align: left;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('uploads/hero1.jpg') no-repeat center center/cover;
+            height: 600px;
+            color: white;
+            padding: 50px 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
-.hero {
-    text-align: left;
-    background: url('uploads/hero1.jpg') no-repeat center center/cover;
-    height: 550px;
-    background-repeat: no-repeat;
-    color: white;
-    padding: 50px 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    position: relative;
-}
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            margin-left: 80px;
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
 
-.hero h1 {
-    font-size: 38px;
-    margin-bottom: 10px;
-    margin-left: 40px;
-    margin-top: 170px;
-    font-weight: bold;
-}
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 15px;
+            margin-left: 80px;
+            max-width: 600px;
+            line-height: 1.6;
+        }
 
-.hero p {
-    font-size: 19px;
-    margin-bottom: 20px;
-    margin-left: 40px;
-}
+        .hero button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            margin-left: 80px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+            width: auto;
+            max-width: 200px;
+        }
 
+        .hero button:hover {
+            background-color: #b71c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
+        }
 
-.hero button {
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    margin-left: 40px;
-    border-radius: 10px;
-}
+        .products {
+            padding: 40px;
+            margin: 0 auto;
+            max-width: 1400px;
+        }
 
-.products {
-    padding: 20px;
-    margin-left: 40px;
-    margin-right: 40px;
-}
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
 
-.filters {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
+        .filter-buttons {
+            display: flex;
+            gap: 15px;
+        }
 
-.filter-buttons {
-    display: flex;
-    gap: 10px;
-}
+        .filters button {
+            background-color: white;
+            border: 2px solid #d32f2f;
+            color: #d32f2f;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
 
-.category-filter select {
-    padding: 8px 16px;
-    border: 1px solid #d32f2f;
-    border-radius: 5px;
-    color: #d32f2f;
-    background-color: white;
-    cursor: pointer;
-    font-size: 14px;
-    min-width: 150px;
-}
+        .filters button:hover,
+        .filters button.active {
+            background-color: #d32f2f;
+            color: white;
+            transform: translateY(-2px);
+        }
 
-.category-filter select:hover {
-    border-color: #b71c1c;
-}
+        .category-filter select {
+            padding: 10px 20px;
+            border: 2px solid #d32f2f;
+            border-radius: 25px;
+            color: #d32f2f;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 180px;
+            transition: all 0.3s ease;
+        }
 
-.category-filter select:focus {
-    outline: none;
-    border-color: #b71c1c;
-    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
-}
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+            width: 100%;
+        }
 
-.filters button {
-    background-color: white;
-    border: 1px solid #d32f2f;
-    color: #d32f2f;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-.filters button:hover,
-.filters button.active {
-    background-color: #d32f2f;
-    color: white;
-}
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
 
-.filters button.active {
-    font-weight: bold;
-}
+        .product-card img {
+            max-width: 100%;
+            height: 180px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
 
-.product-grid :hover
-{
-    transition: transform 0.3s ease;
-    background-color:rgb(183, 179, 179);
-}
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
 
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-    align-items: stretch;
-}
+        .product-card a {
+            text-decoration: none;
+        }
 
+        .product-card h3 {
+            font-size: 18px;
+            margin: 15px 0;
+            color: #333;
+            min-height: 44px;
+        }
 
-.product-card {
-    border: 1px solid #ccc;
-    padding: 20px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 90%;
-    background-color: white;
-    border-radius: 8px;
-}
-.product-card h3 {
-    font-size: 16px;
-    margin: 10px 0;
-    min-height: 40px;
-}
+        .product-card p {
+            font-size: 20px;
+            font-weight: 600;
+            color: #d32f2f;
+            margin: 15px 0;
+        }
 
-.product-card p {
-    font-size: 16px;
-    font-weight: bold;
-    margin: 10px 0;
-}
+        .product-card form {
+            margin-top: auto;
+            width: 100%;
+        }
 
-.product-card form {
-    margin-top: auto;
-}
+        .product-card button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: auto;
+            width: 100%;
+            max-width: 200px;
+        }
 
-.product-card button {
-    margin-top: 10px;
-    width: 100%;
-    padding: 8px;
-    border-radius: 5px;
-}
+        .product-card button:hover {
+            background-color: #b71c1c;
+            transform: translateY(-2px);
+        }
 
+        .pagination {
+            text-align: center;
+            margin: 40px 0;
+        }
 
-.product-card img {
-    max-width: 100%;
-    height: 150px;
-    object-fit: contain;
-    margin-bottom: 10px;
-}
+        .pagination button {
+            background-color: white;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
 
+        .pagination button.active {
+            background-color: #d32f2f;
+            color: white;
+        }
 
-.product-card button {
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-}
+        .pagination button:hover {
+            background-color: #d32f2f;
+            color: white;
+            transform: translateY(-2px);
+        }
 
-.product-card button:hover {
-    background-color: #b71c1c;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-}
-.pagination {
-    text-align: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
+        .cta {
+            margin: 60px auto;
+            max-width: 1400px;
+            text-align: left;
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('uploads/cta.png');
+            background-size: cover;
+            color: white;
+            padding: 80px 40px;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
 
-.pagination button {
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    cursor: pointer;
-    margin: 0 5px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
+        .cta h2 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
 
-.pagination button.active {
-    background-color: #b71c1c;
-    font-weight: bold;
-}
+        .cta p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            line-height: 1.6;
+        }
 
-.pagination button:hover {
-    background-color: #b71c1c;
-}
+        .cta button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+        }
 
-.pagination a {
-    text-decoration: none;
-}
+        .cta button:hover {
+            background-color: #b71c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
+        }
 
-.cta {
-    margin-left: 40px;
-    margin-right: 40px;
-    text-align: left;
-    background-image: url('uploads/cta.png');
-    background-size: cover;
-    color: white;
-    padding: 50px 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
+        .popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
 
-.cta h2 {
-    font-size: 36px;
-    margin-bottom: 10px;
-    margin-left: 40px;
-}
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+                margin-left: 20px;
+            }
 
-.cta p {
-    font-size: 18px;
-    margin-left: 40px;
-}
+            .hero p {
+                margin-left: 20px;
+                font-size: 18px;
+            }
 
-.cta button {
-    margin-left: 40px; /* remove the previous left margin */
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-}
+            .hero button {
+                margin-left: 20px;
+            }
 
+            .products {
+                padding: 20px;
+            }
 
-.footer {
-    text-align: center;
-    background-color: #333;
-    color: white;
-    padding: 10px 0;
-}
-a {
-    text-decoration: none;
-    color: black;
-}
-html {
-    scroll-behavior: smooth;
-}
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
 
-.popup {
-    position: fixed;
-    top: 60px;
-    right: 20px;
-    background-color: #4CAF50;
-    color: white;
-    padding: 15px;
-    border-radius: 5px;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1000;
-}
+            .filter-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
 
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+
+            .cta {
+                margin: 40px 20px;
+                padding: 40px 20px;
+            }
+
+            .cta h2 {
+                font-size: 32px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -450,9 +504,7 @@ html {
         <button onclick="window.location.href='login.php'">Place Order</button>
     </section>
 
-    <footer class="footer">
-        <p>&copy; 2025 CompuCore. All rights reserved.</p>
-    </footer>
+    <?php include 'footer.php'; ?>
 
 </body>
 <script>

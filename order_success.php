@@ -29,5 +29,6 @@
     <h1>Thank you for your order!</h1>
     <p>Your order has been placed successfully.</p>
     <a href="index.php">Continue Shopping</a>
+    <?php include 'footer.php'; ?>
 </body>
 </html>
