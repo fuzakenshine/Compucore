@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 18, 2025 at 07:36 PM
+-- Generation Time: May 01, 2025 at 05:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,17 +42,10 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`cart_id`, `product_id`, `product_name`, `product_price`, `quantity`, `customer_id`, `created_at`) VALUES
-(2, 3, 'DRRM5 RAM', 1200.00, 1, 1, '2025-04-18 15:28:26'),
-(3, 1, 'asda', 123123.00, 2, 1, '2025-04-18 15:28:26'),
-(8, 4, 'White GPU', 1200.00, 1, 1, '2025-04-18 15:28:26'),
-(9, 9, 'Hard Casing White Astro 2025', 10000.00, 1, 1, '2025-04-18 15:28:26'),
-(10, 5, 'mOBO', 1000.00, 1, 1, '2025-04-18 15:28:26'),
-(11, 12, 'RGBiot GAMING HARD CASE', 2000.00, 2, 1, '2025-04-18 16:57:32'),
-(14, 11, 'RTX 3080 GRAPHIC CARD', 45000.00, 3, 1, '2025-04-18 16:56:51'),
-(16, 7, 'Mouse Matte Black', 1000.00, 2, 1, '2025-04-18 16:54:47'),
-(17, 10, 'MSI Router', 12000.00, 4, 1, '2025-04-18 17:33:27'),
-(18, 13, 'ROG Mobo 2030M', 10000.00, 2, 1, '2025-04-18 17:01:14'),
-(19, 18, 'GEFORCE GTX ', 30000.00, 1, 1, '2025-04-18 17:33:40');
+(24, 36, 'RGB Hard Glass Case', 2000.00, 2, 1, '2025-04-25 19:25:14'),
+(25, 38, 'A4TECH BLACK MOUSE', 1000.00, 1, 1, '2025-04-26 01:59:01'),
+(26, 36, 'RGB Hard Glass Case', 2000.00, 1, 2, '2025-04-26 02:19:36'),
+(30, 38, 'A4TECH BLACK MOUSE', 1000.00, 2, 4, '2025-04-26 09:36:27');
 
 -- --------------------------------------------------------
 
@@ -96,7 +89,8 @@ INSERT INTO `categories` (`PK_CATEGORY_ID`, `CAT_NAME`, `CAT_DESC`, `CREATED_AT`
 (22, 'Capture Cards', 'Record video input from external sources', '2025-04-18 23:53:18'),
 (23, 'VR Headsets', 'Virtual reality devices', '2025-04-18 23:53:18'),
 (24, 'Docking Stations', 'Multi-port hubs for laptops or tablets', '2025-04-18 23:53:18'),
-(25, 'External Storage', 'Portable drives like USB HDDs or SSDs', '2025-04-18 23:53:18');
+(25, 'External Storage', 'Portable drives like USB HDDs or SSDs', '2025-04-18 23:53:18'),
+(26, 'Others', 'For anything', '2025-04-26 02:50:42');
 
 -- --------------------------------------------------------
 
@@ -122,7 +116,10 @@ CREATE TABLE `customer` (
 
 INSERT INTO `customer` (`PK_CUSTOMER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`, `CUSTOMER_ADDRESS`, `PHONE_NUM`, `CREATED_AT`, `UPDATE_AT`) VALUES
 (1, 'TINGA', 'JOHN RAY', 'jrtjohnray@gmail.com', '$2y$10$lvIdywOwKO9s0elw8Rx36e/ymyBKustce1nXvEre89nohEIts3qyi', 'OPRRA VILLAREMEDIOS KALUNASAN CEBU CITY, 6000', '09991029087', '2025-04-16 22:33:19', '2025-04-16 22:33:19'),
-(2, 'skibidi', 'Damien', 'damskie@gmail.com', '$2y$10$N3S5KrSGqM3wpY1PLZmZ8.OSpdaCHP5PalBldxYxhhJ02a6nGqI06', 'Vraman', '098263636482', '2025-04-18 02:17:00', '2025-04-18 02:17:00');
+(2, 'skibidi', 'Damien', 'damskie@gmail.com', '$2y$10$N3S5KrSGqM3wpY1PLZmZ8.OSpdaCHP5PalBldxYxhhJ02a6nGqI06', 'Vraman', '098263636482', '2025-04-18 02:17:00', '2025-04-18 02:17:00'),
+(3, 'TINGA', 'JOHNRAY', 'jttinga@email.com', '$2y$10$NkiHMi4wFPMBGIOkH8S.IOQQUJx90YcjjjaTatavgkeCQ6iMrUP36', 'Villa remedios unit 3A', '09991029087', '2025-04-26 16:10:54', '2025-04-26 16:10:54'),
+(4, 'test', '567890-', '67890@1', '$2y$10$GzTEh3vpAb5B1tnEFnonaeBt6ujCvoao3YO9Z7aG.E3yzQ1yCgrcK', '123', 'rewq', '2025-04-26 17:35:08', '2025-04-26 17:35:08'),
+(5, 'Doe', 'John', 'j.doe@email.com', '$2y$10$SIninVA/fQWFKe0NFcW2dOxo1awT89whuTJe6TXhV4FCDqe/zk.uW', 'New York', '09123456789', '2025-05-01 20:27:27', '2025-05-01 20:27:27');
 
 -- --------------------------------------------------------
 
@@ -136,11 +133,19 @@ CREATE TABLE `orders` (
   `FK2_PAYMENT_ID` int(11) NOT NULL,
   `FK3_USER_ID` int(11) NOT NULL,
   `TOTAL_PRICE` decimal(10,2) NOT NULL,
-  `STATUS` ENUM('Pending', 'Approved', 'Shipped', 'Received', 'Completed', 'Rejected') NOT NULL DEFAULT 'Pending',
+  `STATUS` char(15) NOT NULL,
   `ORDER_DATE` datetime NOT NULL DEFAULT current_timestamp(),
-  `LINE_TOTAL` decimal(10,2) NOT NULL,
-  `SHIPPING_METHOD` varchar(50) DEFAULT NULL
+  `LINE_TOTAL` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`PK_ORDER_ID`, `FK1_CUSTOMER_ID`, `FK2_PAYMENT_ID`, `FK3_USER_ID`, `TOTAL_PRICE`, `STATUS`, `ORDER_DATE`, `LINE_TOTAL`) VALUES
+(7, 5, 0, 0, 1000.00, 'Pending', '2025-05-01 23:29:14', 0.00),
+(8, 5, 0, 0, 2000.00, 'Pending', '2025-05-01 23:29:22', 0.00),
+(9, 5, 0, 0, 13000.00, 'Pending', '2025-05-01 23:30:19', 0.00);
 
 -- --------------------------------------------------------
 
@@ -157,6 +162,17 @@ CREATE TABLE `order_detail` (
   `CREATED_AT` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `order_detail`
+--
+
+INSERT INTO `order_detail` (`PK_ORDER_DETAIL_ID`, `FK1_PRODUCT_ID`, `FK2_ORDER_ID`, `QTY`, `PRICE`, `CREATED_AT`) VALUES
+(1, 39, 0, 2, 3000.00, '2025-05-01 22:51:59'),
+(2, 38, 7, 1, 1000.00, '2025-05-01 23:29:14'),
+(3, 32, 8, 1, 2000.00, '2025-05-01 23:29:22'),
+(4, 28, 9, 3, 4000.00, '2025-05-01 23:30:19'),
+(5, 34, 9, 1, 1000.00, '2025-05-01 23:30:19');
+
 -- --------------------------------------------------------
 
 --
@@ -167,6 +183,13 @@ CREATE TABLE `payments` (
   `PK_PAYMENT_ID` int(11) NOT NULL,
   `PAYMENT_METHOD` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`PK_PAYMENT_ID`, `PAYMENT_METHOD`) VALUES
+(0, 'cod');
 
 -- --------------------------------------------------------
 
@@ -193,25 +216,26 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `PROD_NAME`, `PROD_DESC`, `PROD_SPECS`, `PRICE`, `QTY`, `IMAGE`, `CREATED_AT`, `UPDATED_AT`) VALUES
-(1, 2, 1, 'asda', '1', NULL, 123123.00, 1, 'p5.png', '2025-04-17 00:03:03', '2025-04-17 00:03:03'),
-(2, 1, 1, 'ASUS', 'The best of the Best ', NULL, 1200.00, 3, 'p3.png', '2025-04-17 00:32:56', '2025-04-17 00:32:56'),
-(3, 2, 1, 'DRRM5 RAM', 'RAM FOR BETTER EXPERIENCE', NULL, 1200.00, 5, 'p6.png', '2025-04-17 22:03:18', '2025-04-17 22:03:18'),
-(4, 2, 1, 'White GPU', 'WHITE ', NULL, 1200.00, 5, 'p1.png', '2025-04-17 22:46:11', '2025-04-17 22:46:11'),
-(5, 3, 1, 'mOBO', 'EWEW', NULL, 1000.00, 3, 'p4.png', '2025-04-17 23:02:01', '2025-04-17 23:02:01'),
-(6, 1, 1, 'Mousepad', 'Gaming mousepad', NULL, 200.00, 20, 'Flowy Waves Desk Mat, XXL Gaming Mouse Pad, Blue Water Mousepad, Beautiful Nature Desk Mat.jpg', '2025-04-18 02:07:15', '2025-04-18 02:07:15'),
-(7, 1, 1, 'Mouse Matte Black', 'Good for Office Works and light works', NULL, 1000.00, 20, 'Amazon_com_ Dapesuom Small Mouse Pad 6 x 8 Inch….jpg', '2025-04-18 02:08:00', '2025-04-18 02:08:00'),
-(8, 1, 1, 'Black Sticky Mousepad', 'Black mousepad for better gaming', NULL, 450.00, 20, 'DIGSOM Mouse Pad.jpg', '2025-04-18 02:08:40', '2025-04-18 02:08:40'),
-(9, 1, 2, 'Hard Casing White Astro 2025', 'For better', NULL, 10000.00, 10, 'Transform your product into a captivating visual experience with 3D product animation!.jpg', '2025-04-18 02:09:35', '2025-04-18 02:09:35'),
-(10, 1, 2, 'MSI Router', 'For better Wifi Experience', NULL, 12000.00, 20, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-18 02:10:13', '2025-04-18 02:10:13'),
-(11, 2, 2, 'RTX 3080 GRAPHIC CARD', 'GOOD FOR GAMING EXPERIENCE', NULL, 45000.00, 10, 'Video game graphics are a ticking time bomb — the industry needs to focus on art over tech.jpg', '2025-04-18 02:10:51', '2025-04-18 02:10:51'),
-(12, 1, 2, 'RGBiot GAMING HARD CASE', '-Good for eyes', NULL, 2000.00, 30, 'Custom build Gaming PC.jpg', '2025-04-18 02:11:47', '2025-04-18 02:11:47'),
-(13, 3, 2, 'ROG Mobo 2030M', 'Good for gaming', NULL, 10000.00, 10, 'ROG STRIX Z490-E GAMING _ Motherboards _ ROG Global.jpg', '2025-04-18 02:12:39', '2025-04-18 02:12:39'),
-(14, 5, 0, 'HyperX RAM 16GB', '-RGB HYPERX 16GB RAM', '-BLACK\r\n-PURPLE\r\n-RED\r\n-WWHITE', 5000.00, 10, 'The best RAM of 2024_ top memory for your PC.jpg', '2025-04-19 00:29:45', '2025-04-19 00:29:45'),
-(15, 5, 0, 'Corsair coolant fan', 'Best for gaming 123', '-white\r\n-black\r\n-pink\r\n-blue', 20000.00, 10, 'Corsair Dominator Platinum RGB Series.jpg', '2025-04-19 01:09:28', '2025-04-19 01:09:28'),
-(16, 13, 2, 'Keyboard GYA', 'Best for gaming', '-keyboard\r\n-blue\r\n-white\r\n-rgb', 2000.00, 30, 'gaming keyboard.jpg', '2025-04-19 01:10:16', '2025-04-19 01:10:16'),
-(17, 2, 1, 'RTX 3080 ', 'Best for gaming', '-white\r\n-with fan\r\n', 45000.00, 10, 'white graphic card.jpg', '2025-04-19 01:11:04', '2025-04-19 01:11:04'),
-(18, 2, 0, 'GEFORCE GTX ', 'Best for gaming', '-green\r\n-gray\r\n-black', 30000.00, 10, 'db839bf5-d42b-4a59-b48d-6f8f5f3c31fc.jpg', '2025-04-19 01:12:52', '2025-04-19 01:12:52'),
-(19, 19, 1, 'Coolant fan', 'Best for coolants', '-simple\r\n-neat', 2000.00, 10, 'SST-AR04.jpg', '2025-04-19 01:13:27', '2025-04-19 01:13:27');
+(20, 2, 1, 'RTX 3080 ', 'Best for gaming ', '-White\r\n-Cool fan', 3500.00, 11, 'white graphic card.jpg', '2025-04-26 02:26:00', '2025-04-26 02:26:00'),
+(21, 2, 1, 'RTX 3080 BLACK', 'Best For gaming', '-Black\r\n-cool fan', 30000.00, 10, 'Video game graphics are a ticking time bomb — the industry needs to focus on art over tech.jpg', '2025-04-26 02:34:07', '2025-04-26 02:34:07'),
+(22, 8, 2, 'ELFKS DROID CASING', '-The best cased by elon musk', '-White - Blue combi\r\n-Hard Case', 10000.00, 20, 'Transform your product into a captivating visual experience with 3D product animation!.jpg', '2025-04-26 02:35:46', '2025-04-26 02:35:46'),
+(23, 5, 3, 'HyperX RAM 16GB', 'Best for Coding', '-DDRM5\r\n-16GB\r\n', 3000.00, 20, 'The best RAM of 2024_ top memory for your PC.jpg', '2025-04-26 02:36:31', '2025-04-26 02:36:31'),
+(24, 19, 4, 'Corsair coolant fan', 'For your cpu ', '-1000mah Fan', 800.00, 20, 'SST-AR04.jpg', '2025-04-26 02:37:25', '2025-04-26 02:37:25'),
+(25, 3, 1, 'ROG Strix Z490-E GAMING MOTHERBOARD', 'Best for gaming, coding and editing', '-BLACK\r\n-PURPLE\r\n', 5000.00, 20, 'ROG STRIX Z490-E GAMING _ Motherboards _ ROG Global.jpg', '2025-04-26 02:40:24', '2025-04-26 02:40:24'),
+(26, 5, 2, 'T-FORCE Delta 16gb RAM', 'Best for gaming', '-white\r\n-purple\r\n-green\r\n-blue\r\n-pink\r\n-gray', 3000.00, 20, 'p6.png', '2025-04-26 02:41:20', '2025-04-26 02:41:20'),
+(27, 2, 3, 'AMD Radeon GPU FidelityFX', 'Best for gaming', '-black\r\n-red', 25000.00, 10, 'p5.png', '2025-04-26 02:43:11', '2025-04-26 02:43:11'),
+(28, 3, 4, 'MSI mobo ', 'Best for Gaming...\r\n', '-ALL BLACK', 4000.00, 20, 'p4.png', '2025-04-26 02:43:54', '2025-04-26 02:43:54'),
+(29, 1, 1, 'UN Monitor 240hz', 'Best for HD Videos', '-240hz\r\n-1ms\r\n-hdr\r\n-24.5\"', 3000.00, 20, 'p3.png', '2025-04-26 02:45:05', '2025-04-26 02:45:05'),
+(30, 19, 2, 'Coolant fans ', 'Good for your eyes', '-RGB', 2000.00, 20, 'p2.png', '2025-04-26 02:45:37', '2025-04-26 02:45:37'),
+(31, 2, 3, 'AMD White Graphic Card 2080', 'Better experience for gaming', '-white\r\n-cold', 25000.00, 20, 'p1.png', '2025-04-26 02:46:32', '2025-04-26 02:46:32'),
+(32, 13, 3, 'AN Keyboard MC Blue switch', 'Good for typing and gaming', '-Blue switch\r\n-smooth typing\r\n', 2000.00, 20, 'gaming keyboard.jpg', '2025-04-26 02:47:43', '2025-04-26 02:47:43'),
+(33, 26, 4, 'The Great Wave of Kanagawa Mousepad', 'Smooth ', '-White, blue lights', 1000.00, 20, 'Flowy Waves Desk Mat, XXL Gaming Mouse Pad, Blue Water Mousepad, Beautiful Nature Desk Mat.jpg', '2025-04-26 02:51:39', '2025-04-26 02:51:39'),
+(34, 26, 1, 'Black Mousepad ', 'Smooth for mouse and gaming', '-black', 1000.00, 20, 'DIGSOM Mouse Pad.jpg', '2025-04-26 02:52:11', '2025-04-26 02:52:11'),
+(35, 2, 1, 'GEFORCE GTX ', 'Good for gaming', '-32gb RAM', 25000.00, 20, 'db839bf5-d42b-4a59-b48d-6f8f5f3c31fc.jpg', '2025-04-26 02:53:39', '2025-04-26 02:53:39'),
+(36, 8, 3, 'RGB Hard Glass Case', 'See through', '-Glass', 2000.00, 20, 'Custom build Gaming PC.jpg', '2025-04-26 02:54:53', '2025-04-26 02:54:53'),
+(37, 19, 1, 'Corsair coolant fan', 'Cold and Cool', '-White\r\n', 3000.00, 20, 'Corsair Dominator Platinum RGB Series.jpg', '2025-04-26 02:55:30', '2025-04-26 02:55:30'),
+(38, 14, 3, 'A4TECH BLACK MOUSE', 'Good for Valorant', '-black', 1000.00, 20, 'Amazon_com_ Dapesuom Small Mouse Pad 6 x 8 Inch….jpg', '2025-04-26 02:56:30', '2025-04-26 02:56:30'),
+(39, 26, 4, 'MSI Router', 'Good for any WIFI', '-FAST ', 3000.00, 20, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-26 02:57:19', '2025-04-26 02:57:19');
 
 -- --------------------------------------------------------
 
@@ -228,7 +252,7 @@ CREATE TABLE `reviews` (
   `COMMENT` text DEFAULT NULL,
   `CREATED_AT` datetime DEFAULT current_timestamp(),
   `IMAGE` varchar(255) DEFAULT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -255,9 +279,10 @@ CREATE TABLE `supplier` (
 --
 
 INSERT INTO `supplier` (`PK_SUPPLIER_ID`, `FK_USER_ID`, `S_LNAME`, `S_FNAME`, `PHONE_NUM`, `COMPANY_NAME`, `EMAIL`, `SUPPLIER_ADDRESS`, `SUPPLIER_IMAGE`, `CREATE_AT`, `UPDATE_AT`) VALUES
-(0, 1, 'Patino', 'Rafael', '091234567890', 'Bakal TT Corp.', 'Cthulu@gmail.com', 'avocado St Mamba-ling', '351453175_1191126874899419_117306819684368067_n.jpg', '2025-04-18 03:03:57', '2025-04-18 03:03:57'),
-(1, 1, 'Doe', 'John', '1234567890', 'Tech Supplies Co.', 'john.doe@techsupplies.com', '123 Tech Street, Tech City', NULL, '2025-04-16 23:58:54', '2025-04-16 23:58:54'),
-(2, 2, 'Smith', 'Jane', '0987654321', 'Hardware Hub', 'jane.smith@hardwarehub.com', '456 Hardware Ave, Hardware Town', NULL, '2025-04-16 23:58:54', '2025-04-16 23:58:54');
+(1, 0, 'Patinyo', 'Rafael', '+123567890', 'Bakal TT Corp', 'Cthulu@gmail', 'Avocado St. Mambaling', '351453175_1191126874899419_117306819684368067_n.jpg', '2025-04-26 02:18:45', '2025-04-26 02:18:45'),
+(2, 0, 'Caumeran', 'Damien', '+987644123', 'Cow Me Run ', 'damskie@gmail.com', 'V.rama', 'ASDASDSDASA.jpg', '2025-04-26 02:22:20', '2025-04-26 02:22:20'),
+(3, 0, 'Dagupols', 'Client', '+56892134', 'Try me hack', 'Client@gmai.com', 'Buhisan', '467743265_2034794076942966_7629118095982581341_n.jpg', '2025-04-26 02:23:42', '2025-04-26 02:23:42'),
+(4, 0, 'Ancero', 'John Rey', '+565723257', 'JAHH Corp.', 'gwapokoancero123@gmail.com', 'B.rod', '486231808_29198721426439246_8070934184723318600_n.jpg', '2025-04-26 02:25:00', '2025-04-26 02:25:00');
 
 -- --------------------------------------------------------
 
@@ -274,16 +299,16 @@ CREATE TABLE `users` (
   `ADDRESS` varchar(255) NOT NULL,
   `PHONE_NUM` char(15) NOT NULL,
   `CREATED_AT` datetime NOT NULL DEFAULT current_timestamp(),
-  `UPDATE_AT` datetime NOT NULL
+  `UPDATE_AT` datetime NOT NULL,
+  `IS_ADMIN` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`PK_USER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`, `ADDRESS`, `PHONE_NUM`, `CREATED_AT`, `UPDATE_AT`) VALUES
-(1, 'Doe', 'John', 'john.doe@example.com', 'hashedpassword1', '123 Main St', '1234567890', '2025-04-16 23:58:41', '2025-04-16 23:58:41'),
-(2, 'Smith', 'Jane', 'jane.smith@example.com', 'hashedpassword2', '456 Elm St', '0987654321', '2025-04-16 23:58:41', '2025-04-16 23:58:41');
+INSERT INTO `users` (`PK_USER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`, `ADDRESS`, `PHONE_NUM`, `CREATED_AT`, `UPDATE_AT`, `IS_ADMIN`) VALUES
+(0, 'Admin', 'System', 'admin@compucore.com', '$2y$10$IuvaHPz32l.pwIiXENQgIuIDDldeKym450tpqFkOoTl4eT/pwKbhW', 'Compucore HQ', '09123456789', '2025-04-26 01:15:58', '0000-00-00 00:00:00', 1);
 
 --
 -- Indexes for dumped tables
@@ -372,25 +397,43 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `order_detail`
+--
+ALTER TABLE `order_detail`
+  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
   MODIFY `PK_REVIEW_ID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `supplier`
+--
+ALTER TABLE `supplier`
+  MODIFY `PK_SUPPLIER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables
@@ -423,7 +466,7 @@ ALTER TABLE `order_detail`
 --
 ALTER TABLE `products`
   ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`FK1_CATEGORY_ID`) REFERENCES `categories` (`PK_CATEGORY_ID`),
-  ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`FK2_SUPPLIER_ID`) REFERENCES `supplier` (`PK_SUPPLIER_ID`);
+  ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`FK2_SUPPLIER_ID`) REFERENCES `supplier` (`PK_SUPPLIER_ID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `reviews`
