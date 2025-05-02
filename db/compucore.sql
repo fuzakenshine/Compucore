@@ -311,6 +311,22 @@ INSERT INTO `users` (`PK_USER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`,
 (0, 'Admin', 'System', 'admin@compucore.com', '$2y$10$IuvaHPz32l.pwIiXENQgIuIDDldeKym450tpqFkOoTl4eT/pwKbhW', 'Compucore HQ', '09123456789', '2025-04-26 01:15:58', '0000-00-00 00:00:00', 1);
 
 --
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT,
+  `FK_CUSTOMER_ID` int(11) NOT NULL,
+  `MESSAGE` text NOT NULL,
+  `TYPE` enum('order','payment','system') NOT NULL,
+  `STATUS` enum('unread','read') NOT NULL DEFAULT 'unread',
+  `CREATED_AT` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`PK_NOTIFICATION_ID`),
+  KEY `FK_CUSTOMER_ID` (`FK_CUSTOMER_ID`),
+  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`FK_CUSTOMER_ID`) REFERENCES `customer` (`PK_CUSTOMER_ID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
 -- Indexes for dumped tables
 --
 

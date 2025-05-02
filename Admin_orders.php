@@ -14,6 +14,39 @@ $sql = "SELECT o.PK_ORDER_ID, c.F_NAME, c.L_NAME, o.STATUS, o.TOTAL_PRICE, o.ORD
         JOIN customer c ON o.FK1_CUSTOMER_ID = c.PK_CUSTOMER_ID
         ORDER BY o.ORDER_DATE DESC";
 $result = $conn->query($sql);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['action'])) {
+    $order_id = intval($_POST['order_id']);
+    $action = $_POST['action'];
+    $new_status = '';
+    if ($action === 'approve') {
+        $new_status = 'Approved';
+    } elseif ($action === 'reject') {
+        $new_status = 'Rejected';
+    }
+    if ($new_status) {
+        $stmt = $conn->prepare("UPDATE orders SET STATUS = ? WHERE PK_ORDER_ID = ?");
+        $stmt->bind_param("si", $new_status, $order_id);
+        $stmt->execute();
+        
+        // Create notification for the customer
+        $customer_id = $_POST['customer_id'];
+        $message = $new_status === 'Approved' 
+            ? "Your order #$order_id has been approved and is being processed." 
+            : "Your order #$order_id has been rejected. Please check the details.";
+            
+        $notification_sql = "INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE) 
+                            VALUES (?, ?, 'order')";
+        $stmt = $conn->prepare($notification_sql);
+        $stmt->bind_param("is", $customer_id, $message);
+        $stmt->execute();
+        
+        $stmt->close();
+        // Optional: Refresh to show updated status
+        header("Location: Admin_orders.php");
+        exit();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -167,6 +200,7 @@ $result = $conn->query($sql);
                     <th>Status</th>
                     <th>Total Price</th>
                     <th>Date/Time</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -174,9 +208,27 @@ $result = $conn->query($sql);
                 <tr>
                     <td><?= htmlspecialchars($row['PK_ORDER_ID']) ?></td>
                     <td><?= htmlspecialchars($row['F_NAME'] . ' ' . $row['L_NAME']) ?></td>
-                    <td><?= htmlspecialchars($row['STATUS']) ?></td>
+                    <td style="font-weight:bold;color:<?= $row['STATUS'] === 'Approved' ? '#388e3c' : ($row['STATUS'] === 'Rejected' ? '#d32f2f' : '#333') ?>;">
+                        <?= htmlspecialchars($row['STATUS']) ?>
+                    </td>
                     <td>₱<?= number_format($row['TOTAL_PRICE'], 2) ?></td>
                     <td><?= date("m/d/Y H:i", strtotime($row['ORDER_DATE'])) ?></td>
+                    <td>
+                        <?php if ($row['STATUS'] !== 'Approved' && $row['STATUS'] !== 'Rejected'): ?>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="order_id" value="<?= htmlspecialchars($row['PK_ORDER_ID']) ?>">
+                                <button type="submit" name="action" value="approve" style="background:#388e3c;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Approve</button>
+                            </form>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="order_id" value="<?= htmlspecialchars($row['PK_ORDER_ID']) ?>">
+                                <button type="submit" name="action" value="reject" style="background:#d32f2f;color:white;border:none;padding:5px 10px;border-radius:3px;cursor:pointer;">Reject</button>
+                            </form>
+                        <?php else: ?>
+                            <span style="color:<?= $row['STATUS'] === 'Approved' ? '#388e3c' : '#d32f2f' ?>;font-weight:bold;">
+                                <?= htmlspecialchars($row['STATUS']) ?>
+                            </span>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endwhile; ?>
             </tbody>

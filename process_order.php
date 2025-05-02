@@ -68,6 +68,14 @@ try {
     $stmt->execute();
     $order_id = $conn->insert_id;
 
+    // Create notification for the order
+    $notification_sql = "INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE) 
+                        VALUES (?, ?, 'order')";
+    $notification_message = "Your order #$order_id has been placed and is awaiting approval.";
+    $stmt = $conn->prepare($notification_sql);
+    $stmt->bind_param("is", $user_id, $notification_message);
+    $stmt->execute();
+
     // Insert order items
     $order_item_sql = "INSERT INTO order_detail (FK2_ORDER_ID, FK1_PRODUCT_ID, QTY, PRICE) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($order_item_sql);
