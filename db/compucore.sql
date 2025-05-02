@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 01, 2025 at 05:35 PM
+-- Generation Time: May 02, 2025 at 08:09 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -45,7 +45,8 @@ INSERT INTO `cart` (`cart_id`, `product_id`, `product_name`, `product_price`, `q
 (24, 36, 'RGB Hard Glass Case', 2000.00, 2, 1, '2025-04-25 19:25:14'),
 (25, 38, 'A4TECH BLACK MOUSE', 1000.00, 1, 1, '2025-04-26 01:59:01'),
 (26, 36, 'RGB Hard Glass Case', 2000.00, 1, 2, '2025-04-26 02:19:36'),
-(30, 38, 'A4TECH BLACK MOUSE', 1000.00, 2, 4, '2025-04-26 09:36:27');
+(30, 38, 'A4TECH BLACK MOUSE', 1000.00, 2, 4, '2025-04-26 09:36:27'),
+(45, 23, 'HyperX RAM 16GB', 3000.00, 1, 5, '2025-05-02 17:35:36');
 
 -- --------------------------------------------------------
 
@@ -124,6 +125,34 @@ INSERT INTO `customer` (`PK_CUSTOMER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `PK_NOTIFICATION_ID` int(11) NOT NULL,
+  `FK_CUSTOMER_ID` int(11) NOT NULL,
+  `MESSAGE` text NOT NULL,
+  `TYPE` enum('order','payment','system') NOT NULL,
+  `STATUS` enum('unread','read') NOT NULL DEFAULT 'unread',
+  `CREATED_AT` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`PK_NOTIFICATION_ID`, `FK_CUSTOMER_ID`, `MESSAGE`, `TYPE`, `STATUS`, `CREATED_AT`) VALUES
+(1, 5, 'Your order #14 has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:14:50'),
+(2, 5, 'Your order #8 has been approved and is being processed.', 'order', 'read', '2025-05-03 01:17:33'),
+(3, 5, 'Your order #15 has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:19:05'),
+(4, 5, 'Your order for A4TECH BLACK MOUSE has been approved and is being processed.', 'order', 'read', '2025-05-03 01:22:58'),
+(5, 5, 'Your order for ROG Strix Z490-E GAMING MOTHERBOARD has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:24:59'),
+(6, 5, 'Your order for Corsair coolant fan has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:25:15'),
+(7, 5, 'Your order for ROG Strix Z490-E GAMING MOTHERBOARD has been rejected. Please check the details.', 'order', 'read', '2025-05-03 01:40:23');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -143,9 +172,16 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`PK_ORDER_ID`, `FK1_CUSTOMER_ID`, `FK2_PAYMENT_ID`, `FK3_USER_ID`, `TOTAL_PRICE`, `STATUS`, `ORDER_DATE`, `LINE_TOTAL`) VALUES
-(7, 5, 0, 0, 1000.00, 'Pending', '2025-05-01 23:29:14', 0.00),
-(8, 5, 0, 0, 2000.00, 'Pending', '2025-05-01 23:29:22', 0.00),
-(9, 5, 0, 0, 13000.00, 'Pending', '2025-05-01 23:30:19', 0.00);
+(7, 5, 0, 0, 1000.00, 'Approved', '2025-05-01 23:29:14', 0.00),
+(8, 5, 0, 0, 2000.00, 'Approved', '2025-05-01 23:29:22', 0.00),
+(9, 5, 0, 0, 13000.00, 'Approved', '2025-05-01 23:30:19', 0.00),
+(10, 5, 0, 0, 3000.00, 'Approved', '2025-05-01 23:41:31', 0.00),
+(11, 5, 0, 0, 25000.00, 'Approved', '2025-05-01 23:41:52', 0.00),
+(12, 5, 0, 0, 10000.00, 'Approved', '2025-05-03 01:05:28', 0.00),
+(14, 5, 0, 0, 2000.00, 'Approved', '2025-05-03 01:14:50', 0.00),
+(15, 5, 0, 0, 3000.00, 'Approved', '2025-05-03 01:19:05', 0.00),
+(16, 5, 0, 0, 5000.00, 'Rejected', '2025-05-03 01:24:59', 0.00),
+(17, 5, 0, 0, 3000.00, 'Pending', '2025-05-03 01:25:15', 0.00);
 
 -- --------------------------------------------------------
 
@@ -171,7 +207,14 @@ INSERT INTO `order_detail` (`PK_ORDER_DETAIL_ID`, `FK1_PRODUCT_ID`, `FK2_ORDER_I
 (2, 38, 7, 1, 1000.00, '2025-05-01 23:29:14'),
 (3, 32, 8, 1, 2000.00, '2025-05-01 23:29:22'),
 (4, 28, 9, 3, 4000.00, '2025-05-01 23:30:19'),
-(5, 34, 9, 1, 1000.00, '2025-05-01 23:30:19');
+(5, 34, 9, 1, 1000.00, '2025-05-01 23:30:19'),
+(6, 26, 10, 1, 3000.00, '2025-05-01 23:41:31'),
+(7, 27, 11, 1, 25000.00, '2025-05-01 23:41:52'),
+(8, 22, 12, 1, 10000.00, '2025-05-03 01:05:28'),
+(9, 36, 14, 1, 2000.00, '2025-05-03 01:14:50'),
+(10, 37, 15, 1, 3000.00, '2025-05-03 01:19:05'),
+(11, 25, 16, 1, 5000.00, '2025-05-03 01:24:59'),
+(12, 37, 17, 1, 3000.00, '2025-05-03 01:25:15');
 
 -- --------------------------------------------------------
 
@@ -225,7 +268,7 @@ INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `
 (26, 5, 2, 'T-FORCE Delta 16gb RAM', 'Best for gaming', '-white\r\n-purple\r\n-green\r\n-blue\r\n-pink\r\n-gray', 3000.00, 20, 'p6.png', '2025-04-26 02:41:20', '2025-04-26 02:41:20'),
 (27, 2, 3, 'AMD Radeon GPU FidelityFX', 'Best for gaming', '-black\r\n-red', 25000.00, 10, 'p5.png', '2025-04-26 02:43:11', '2025-04-26 02:43:11'),
 (28, 3, 4, 'MSI mobo ', 'Best for Gaming...\r\n', '-ALL BLACK', 4000.00, 20, 'p4.png', '2025-04-26 02:43:54', '2025-04-26 02:43:54'),
-(29, 1, 1, 'UN Monitor 240hz', 'Best for HD Videos', '-240hz\r\n-1ms\r\n-hdr\r\n-24.5\"', 3000.00, 20, 'p3.png', '2025-04-26 02:45:05', '2025-04-26 02:45:05'),
+(29, 1, 1, 'UN Monitor 240hz', 'Best for HD Videos', '-240hz\r\n-1ms\r\n-hdr\r\n-24.5\"', 3000.00, 19, 'p3.png', '2025-04-26 02:45:05', '2025-04-26 02:45:05'),
 (30, 19, 2, 'Coolant fans ', 'Good for your eyes', '-RGB', 2000.00, 20, 'p2.png', '2025-04-26 02:45:37', '2025-04-26 02:45:37'),
 (31, 2, 3, 'AMD White Graphic Card 2080', 'Better experience for gaming', '-white\r\n-cold', 25000.00, 20, 'p1.png', '2025-04-26 02:46:32', '2025-04-26 02:46:32'),
 (32, 13, 3, 'AN Keyboard MC Blue switch', 'Good for typing and gaming', '-Blue switch\r\n-smooth typing\r\n', 2000.00, 20, 'gaming keyboard.jpg', '2025-04-26 02:47:43', '2025-04-26 02:47:43'),
@@ -311,22 +354,6 @@ INSERT INTO `users` (`PK_USER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`,
 (0, 'Admin', 'System', 'admin@compucore.com', '$2y$10$IuvaHPz32l.pwIiXENQgIuIDDldeKym450tpqFkOoTl4eT/pwKbhW', 'Compucore HQ', '09123456789', '2025-04-26 01:15:58', '0000-00-00 00:00:00', 1);
 
 --
--- Table structure for table `notifications`
---
-
-CREATE TABLE `notifications` (
-  `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT,
-  `FK_CUSTOMER_ID` int(11) NOT NULL,
-  `MESSAGE` text NOT NULL,
-  `TYPE` enum('order','payment','system') NOT NULL,
-  `STATUS` enum('unread','read') NOT NULL DEFAULT 'unread',
-  `CREATED_AT` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`PK_NOTIFICATION_ID`),
-  KEY `FK_CUSTOMER_ID` (`FK_CUSTOMER_ID`),
-  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`FK_CUSTOMER_ID`) REFERENCES `customer` (`PK_CUSTOMER_ID`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
 -- Indexes for dumped tables
 --
 
@@ -350,6 +377,13 @@ ALTER TABLE `categories`
 ALTER TABLE `customer`
   ADD PRIMARY KEY (`PK_CUSTOMER_ID`),
   ADD UNIQUE KEY `EMAIL` (`EMAIL`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`PK_NOTIFICATION_ID`),
+  ADD KEY `FK_CUSTOMER_ID` (`FK_CUSTOMER_ID`);
 
 --
 -- Indexes for table `orders`
@@ -413,7 +447,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `customer`
@@ -422,16 +456,22 @@ ALTER TABLE `customer`
   MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `order_detail`
 --
 ALTER TABLE `order_detail`
-  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -461,6 +501,12 @@ ALTER TABLE `supplier`
 ALTER TABLE `cart`
   ADD CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`PK_PRODUCT_ID`),
   ADD CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`PK_CUSTOMER_ID`);
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`FK_CUSTOMER_ID`) REFERENCES `customer` (`PK_CUSTOMER_ID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `orders`
