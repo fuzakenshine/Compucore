@@ -71,7 +71,8 @@ try {
     // Create notification for the order
     $notification_sql = "INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE) 
                         VALUES (?, ?, 'order')";
-    $notification_message = "Your order #$order_id has been placed and is awaiting approval.";
+    $product_names = array_map(function($item) { return $item['PROD_NAME']; }, $cart_items);
+    $notification_message = "Your order for " . implode(", ", $product_names) . " has been placed and is awaiting approval.";
     $stmt = $conn->prepare($notification_sql);
     $stmt->bind_param("is", $user_id, $notification_message);
     $stmt->execute();

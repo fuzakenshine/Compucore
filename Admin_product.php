@@ -371,6 +371,9 @@ $result = $conn->query($sql);
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
         </a>
+        <a href="Admin_reports.php">
+            <i class="fas fa-chart-bar"></i> Reports
+        </a>
         <a href="logout.php">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>

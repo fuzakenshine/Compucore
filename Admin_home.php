@@ -169,6 +169,9 @@ for ($month = 1; $month <= 12; $month++) {
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
         </a>
+        <a href="Admin_reports.php">
+            <i class="fas fa-chart-bar"></i> Reports
+        </a>
         <a href="logout.php">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
@@ -178,7 +181,7 @@ for ($month = 1; $month <= 12; $month++) {
         <h1>Dashboard</h1>
 
         <div class="cards">
-    <a href="Admin_orders.php" style="text-decoration: none; width: 50%;">
+    <a href="Admin_orders.php" style="text-decoration: none; width: 33%;">
         <div class="card green">
             <i class="fas fa-shopping-cart fa-2x"></i>
             <h2><?= $pendingOrders ?></h2>
@@ -186,11 +189,19 @@ for ($month = 1; $month <= 12; $month++) {
         </div>
     </a>
 
-    <a href="Admin_customers.php" style="text-decoration: none; width: 50%;">
+    <a href="Admin_customers.php" style="text-decoration: none; width: 33%;">
         <div class="card yellow">
             <i class="fas fa-users fa-2x"></i>
             <h2><?= number_format($totalCustomers) ?></h2>
             <p>Users</p>
+        </div>
+    </a>
+
+    <a href="Admin_reports.php" style="text-decoration: none; width: 33%;">
+        <div class="card" style="background-color: #2196f3;">
+            <i class="fas fa-chart-bar fa-2x"></i>
+            <h2>Reports</h2>
+            <p>View Analytics</p>
         </div>
     </a>
 </div>

@@ -10,8 +10,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: transparent; /* Transparent by default */
-            transition: background-color 0.3s ease;
+            background-color: #d32f2f; /* Red background by default */
             color: white;
             padding: 10px 20px;
             position: fixed;
@@ -20,11 +19,11 @@
             right: 0;
             z-index: 1000;
             height: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .header.scrolled {
-            background-color: #d32f2f; /* Red on scroll */
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background-color: #d32f2f; /* Same red color on scroll */
         }
         
         .header .logo {
@@ -324,6 +323,12 @@
             justify-content: center;
             margin-right: 15px;
             flex-shrink: 0;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .icon-container i {
+            color: #333 !important;
+            font-size: 16px;
         }
         
         .notification-item-container {
@@ -336,8 +341,15 @@
         }
         
         .notification-icon-order {
-            color: #d32f2f;
-            font-size: 16px;
+            color: #d32f2f !important;
+        }
+        
+        .notification-icon-payment {
+            color: #4CAF50 !important;
+        }
+        
+        .notification-icon-system {
+            color: #2196F3 !important;
         }
         
         .notification-empty {
@@ -435,11 +447,11 @@
                                 notificationElement.className = `notification-item ${notification.status === 'unread' ? 'unread' : ''}`;
                                 notificationElement.setAttribute('data-id', notification.id);
                                 
-                                let iconClass = 'fas fa-info-circle';
+                                let iconClass = 'fas fa-info-circle notification-icon-system';
                                 if (notification.type === 'order') {
-                                    iconClass = 'fas fa-shopping-bag';
+                                    iconClass = 'fas fa-shopping-bag notification-icon-order';
                                 } else if (notification.type === 'payment') {
-                                    iconClass = 'fas fa-money-bill-wave';
+                                    iconClass = 'fas fa-money-bill-wave notification-icon-payment';
                                 }
                                 
                                 notificationElement.innerHTML = `
@@ -452,7 +464,7 @@
                                                 ${notification.message}
                                             </div>
                                             <div class="notification-time">
-                                                <i class="far fa-clock"></i> ${formatTimeAgo(notification.created_at)}
+                                                ${formatTimeAgo(notification.created_at)}
                                             </div>
                                         </div>
                                     </div>

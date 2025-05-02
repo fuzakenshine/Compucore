@@ -15,6 +15,25 @@ $sql = "SELECT o.PK_ORDER_ID, c.F_NAME, c.L_NAME, o.STATUS, o.TOTAL_PRICE, o.ORD
         ORDER BY o.ORDER_DATE DESC";
 $result = $conn->query($sql);
 
+// Function to get product names for an order
+function getProductNames($conn, $order_id) {
+    $sql = "SELECT p.PROD_NAME 
+            FROM order_detail od 
+            JOIN products p ON od.FK1_PRODUCT_ID = p.PK_PRODUCT_ID 
+            WHERE od.FK2_ORDER_ID = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $order_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $product_names = [];
+    while ($row = $result->fetch_assoc()) {
+        $product_names[] = $row['PROD_NAME'];
+    }
+    
+    return implode(", ", $product_names);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['action'])) {
     $order_id = intval($_POST['order_id']);
     $action = $_POST['action'];
@@ -25,16 +44,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['a
         $new_status = 'Rejected';
     }
     if ($new_status) {
+        // First get the customer ID from the order
+        $customer_sql = "SELECT FK1_CUSTOMER_ID FROM orders WHERE PK_ORDER_ID = ?";
+        $stmt = $conn->prepare($customer_sql);
+        $stmt->bind_param("i", $order_id);
+        $stmt->execute();
+        $customer_result = $stmt->get_result();
+        $customer_id = $customer_result->fetch_assoc()['FK1_CUSTOMER_ID'];
+        
+        // Update order status
         $stmt = $conn->prepare("UPDATE orders SET STATUS = ? WHERE PK_ORDER_ID = ?");
         $stmt->bind_param("si", $new_status, $order_id);
         $stmt->execute();
         
         // Create notification for the customer
-        $customer_id = $_POST['customer_id'];
         $message = $new_status === 'Approved' 
-            ? "Your order #$order_id has been approved and is being processed." 
-            : "Your order #$order_id has been rejected. Please check the details.";
-            
+            ? "Your order for " . getProductNames($conn, $order_id) . " has been approved and is being processed."
+            : "Your order for " . getProductNames($conn, $order_id) . " has been rejected. Please check the details.";
         $notification_sql = "INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE) 
                             VALUES (?, ?, 'order')";
         $stmt = $conn->prepare($notification_sql);
@@ -179,6 +205,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['a
         </a>
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
+        </a>
+        <a href="Admin_reports.php">
+            <i class="fas fa-chart-bar"></i> Reports
         </a>
         <a href="logout.php">
             <i class="fas fa-sign-out-alt"></i> Logout

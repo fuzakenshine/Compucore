@@ -442,31 +442,7 @@ $result = $stmt->get_result();
         </style>
 </head>
 <body>
-<header class="header">
-<!-- Replace the empty div with an img tag -->
-<div class="logo">
-    <a href="index.php">
-        <img src="uploads/LOGOW.PNG" alt="Compucore Logo" height="30">
-    </a>
-</div>
-        <div class="search-bar">
-            <input type="text" placeholder="Search">
-            <button><i class="fas fa-search"></i></button>
-        </div>
-        <div class="icons">
-        <a href="cart.php">
-            <i class="fas fa-shopping-cart"></i>
-        </a>
-            <i class="fas fa-money-bill"></i> 
-        </div>
-        <div class="burger-menu">
-            <button><i class="fas fa-bars"></i></button>
-            <div class="dropdown-content">
-                <a href="profile.php">Profile</a>
-                <a href="landing.php">Logout</a>
-            </div>
-        </div>
-    </header>    
+<?php include 'header.php'; ?>
     <div class="cart-container">
         <h1 class="cart-title">🛒 My Cart</h1>
 
