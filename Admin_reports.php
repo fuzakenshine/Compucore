@@ -1,6 +1,4 @@
 <?php
-require_once 'includes/auth.php';
-checkAdminAccess();
 include 'db_connect.php';
 
 // Fetch admin name
@@ -211,7 +209,7 @@ switch($reportType) {
     </style>
 </head>
 <body>
-    <div class="sidebar">
+<div class="sidebar">
         <div class="admin-profile">
             <h3><?= htmlspecialchars($adminName) ?></h3>
         </div>
@@ -230,7 +228,7 @@ switch($reportType) {
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
         </a>
-        <a href="Admin_reports.php" class="active">
+        <a href="Admin_reports.php"  class="active">
             <i class="fas fa-chart-bar"></i> Reports
         </a>
         <a href="logout.php">
@@ -314,6 +312,14 @@ switch($reportType) {
             <?php endif; ?>
         </div>
     </div>
+    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
 
     <?php if ($reportType === 'statistical'): ?>
     <script>

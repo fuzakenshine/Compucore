@@ -1,43 +1,55 @@
 <?php
-require_once 'includes/auth.php';
-checkAdminAccess();
+session_start();
 include 'db_connect.php';
 
 // Fetch admin name
+// Fetch admin name
+/**
 $admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
 $adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+**/
 
-// --- Fetch pending orders ---
+$admin_id = $_SESSION['user_id'];
+$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
+$adminQuery->bind_param("i", $admin_id);
+$adminQuery->execute();
+$adminResult = $adminQuery->get_result();
+$adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
+// Pending Orders
 $ordersQuery = $conn->query("SELECT COUNT(*) AS total FROM orders WHERE STATUS = 'Pending'");
 $pendingOrders = $ordersQuery->fetch_assoc()['total'];
 
-// --- Fetch total customers ---
+// Customers
 $customersQuery = $conn->query("SELECT COUNT(*) AS total FROM customer");
 $totalCustomers = $customersQuery->fetch_assoc()['total'];
 
-// --- Monthly Revenue Trend (from orders) ---
-$salesThisYear = [];
-$salesLastYear = [];
+// Order Trend Data
+$orderCountsThisYear = [];
+$orderCountsLastYear = [];
 
 for ($month = 1; $month <= 12; $month++) {
-    // Format with leading zero
-    $m = str_pad($month, 2, "0", STR_PAD_LEFT);
-
-    // This year
-    $q1 = $conn->query("SELECT SUM(TOTAL_PRICE) AS total FROM orders 
+    $q1 = $conn->query("SELECT COUNT(*) AS total FROM orders 
         WHERE MONTH(ORDER_DATE) = $month AND YEAR(ORDER_DATE) = YEAR(CURDATE())");
-    $salesThisYear[] = floatval($q1->fetch_assoc()['total'] ?? 0);
+    $orderCountsThisYear[] = intval($q1->fetch_assoc()['total'] ?? 0);
 
-    // Last year
-    $q2 = $conn->query("SELECT SUM(TOTAL_PRICE) AS total FROM orders 
+    $q2 = $conn->query("SELECT COUNT(*) AS total FROM orders 
         WHERE MONTH(ORDER_DATE) = $month AND YEAR(ORDER_DATE) = YEAR(CURDATE()) - 1");
-    $salesLastYear[] = floatval($q2->fetch_assoc()['total'] ?? 0);
+    $orderCountsLastYear[] = intval($q2->fetch_assoc()['total'] ?? 0);
+}
+
+// Pie Chart Data - Order Status Distribution
+$statusQuery = $conn->query("SELECT STATUS, COUNT(*) AS total FROM orders GROUP BY STATUS");
+$orderStatuses = [];
+$statusCounts = [];
+
+while ($row = $statusQuery->fetch_assoc()) {
+    $orderStatuses[] = $row['STATUS'];
+    $statusCounts[] = intval($row['total']);
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,14 +80,6 @@ for ($month = 1; $month <= 12; $month++) {
             padding: 20px 0;
             border-bottom: 1px solid rgba(255,255,255,0.2);
             margin-bottom: 20px;
-        }
-
-        .admin-profile img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-            border: 3px solid white;
         }
 
         .admin-profile h3 {
@@ -124,125 +128,145 @@ for ($month = 1; $month <= 12; $month++) {
             padding: 20px;
             border-radius: 10px;
             color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.03);
         }
 
         .card.green { background-color: #4caf50; }
         .card.yellow { background-color: #fbc02d; }
 
-        .card h2 {
-            margin: 0;
+        .charts-wrapper {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+            flex-wrap: wrap;
         }
 
         .chart-container {
-            margin-top: 40px;
+            flex: 1;
+            min-width: 300px;
             background-color: #ffcdd2;
             padding: 20px;
             border-radius: 15px;
         }
-        .card:hover {
-            transform: scale(1.03);
-        }
-        .card {
-            cursor: pointer;
-            transition: transform 0.2s;
+
+        canvas {
+            max-height: 250px;
         }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
         <div class="admin-profile">
             <h3><?= htmlspecialchars($adminName) ?></h3>
         </div>
-        <a href="Admin_home.php" class="active">
-            <i class="fas fa-home"></i> Dashboard
-        </a>
-        <a href="Admin_orders.php">
-            <i class="fas fa-shopping-cart"></i> Orders
-        </a>
-        <a href="Admin_suppliers.php">
-            <i class="fas fa-truck"></i> Suppliers
-        </a>
-        <a href="Admin_product.php">
-            <i class="fas fa-box"></i> Products
-        </a>
-        <a href="Admin_customers.php">
-            <i class="fas fa-users"></i> Customers
-        </a>
-        <a href="Admin_reports.php">
-            <i class="fas fa-chart-bar"></i> Reports
-        </a>
-        <a href="logout.php">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
+        <a href="Admin_home.php" class="active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="Admin_orders.php"><i class="fas fa-shopping-cart"></i> Orders</a>
+        <a href="Admin_suppliers.php"><i class="fas fa-truck"></i> Suppliers</a>
+        <a href="Admin_product.php"><i class="fas fa-box"></i> Products</a>
+        <a href="Admin_customers.php"><i class="fas fa-users"></i> Customers</a>
+        <a href="Admin_reports.php"><i class="fas fa-chart-bar"></i> Reports</a>
+        <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
     <div class="main">
         <h1>Dashboard</h1>
 
         <div class="cards">
-    <a href="Admin_orders.php" style="text-decoration: none; width: 33%;">
-        <div class="card green">
-            <i class="fas fa-shopping-cart fa-2x"></i>
-            <h2><?= $pendingOrders ?></h2>
-            <p>Pending Orders</p>
+            <a href="Admin_orders.php" style="text-decoration: none; width: 33%;">
+                <div class="card green">
+                    <i class="fas fa-shopping-cart fa-2x"></i>
+                    <h2><?= $pendingOrders ?></h2>
+                    <p>Pending Orders</p>
+                </div>
+            </a>
+            <a href="Admin_customers.php" style="text-decoration: none; width: 33%;">
+                <div class="card yellow">
+                    <i class="fas fa-users fa-2x"></i>
+                    <h2><?= number_format($totalCustomers) ?></h2>
+                    <p>Users</p>
+                </div>
+            </a>
+            <a href="Admin_reports.php" style="text-decoration: none; width: 33%;">
+                <div class="card" style="background-color: #2196f3;">
+                    <i class="fas fa-chart-bar fa-2x"></i>
+                    <h2>Reports</h2>
+                    <p>View Analytics</p>
+                </div>
+            </a>
         </div>
-    </a>
 
-    <a href="Admin_customers.php" style="text-decoration: none; width: 33%;">
-        <div class="card yellow">
-            <i class="fas fa-users fa-2x"></i>
-            <h2><?= number_format($totalCustomers) ?></h2>
-            <p>Users</p>
-        </div>
-    </a>
+        <div class="charts-wrapper">
+            <div class="chart-container">
+                <h3 style="margin-bottom: 10px;">Monthly Orders</h3>
+                <canvas id="salesChart"></canvas>
+            </div>
 
-    <a href="Admin_reports.php" style="text-decoration: none; width: 33%;">
-        <div class="card" style="background-color: #2196f3;">
-            <i class="fas fa-chart-bar fa-2x"></i>
-            <h2>Reports</h2>
-            <p>View Analytics</p>
-        </div>
-    </a>
-</div>
-
-
-        <div class="chart-container">
-            <h2>Sales Trend</h2>
-            <canvas id="salesChart"></canvas>
+            <div class="chart-container">
+                <h3 style="margin-bottom: 10px;">Order Status Distribution</h3>
+                <canvas id="statusPie"></canvas>
+            </div>
         </div>
     </div>
 
     <script>
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        const salesChart = new Chart(ctx, {
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const statusCtx = document.getElementById('statusPie').getContext('2d');
+
+        // Line Chart - Monthly Orders
+        new Chart(salesCtx, {
             type: 'line',
             data: {
                 labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                datasets: [
+                    {
+                        label: 'This Year',
+                        data: <?= json_encode($orderCountsThisYear) ?>,
+                        borderColor: '#4caf50',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Last Year',
+                        data: <?= json_encode($orderCountsLastYear) ?>,
+                        borderColor: '#f44336',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+
+        // Pie Chart - Order Status
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: <?= json_encode($orderStatuses) ?>,
                 datasets: [{
-                    label: 'This Year',
-                    data: <?= json_encode($salesThisYear) ?>,
-                    borderColor: '#ffffff',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2
-                }, {
-                    label: 'Last Year',
-                    data: <?= json_encode($salesLastYear) ?>,
-                    borderColor: '#000000',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2
+                    label: 'Order Status',
+                    data: <?= json_encode($statusCounts) ?>,
+                    backgroundColor: [
+                        '#ff6384', '#36a2eb', '#ffce56', '#8bc34a', '#e91e63', '#009688'
+                    ]
                 }]
             },
             options: {
                 responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1000
-                        }
-                    }
-                }
+                maintainAspectRatio: false
             }
         });
     </script>

@@ -1,6 +1,8 @@
 <?php
-session_start();
-include 'db_connect.php'; // Include the database connector
+require_once 'includes/auth.php';
+checkAuthentication(); // This will redirect to login if not authenticated
+
+include 'db_connect.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['loggedin'])) {
@@ -27,9 +29,12 @@ $filter = isset($_GET['filter']) ? $_GET['filter'] : '';
 $category = isset($_GET['category']) ? $_GET['category'] : '';
 
 // Base query
-$sql = "SELECT p.*, c.CAT_NAME 
+$sql = "SELECT p.*, c.CAT_NAME, COALESCE(AVG(r.RATING), 0) as RATING 
         FROM products p 
-        LEFT JOIN categories c ON p.FK1_CATEGORY_ID = c.PK_CATEGORY_ID";
+        LEFT JOIN categories c ON p.FK1_CATEGORY_ID = c.PK_CATEGORY_ID
+        LEFT JOIN reviews r ON p.PK_PRODUCT_ID = r.FK2_PRODUCT_ID
+        WHERE p.QTY > 0
+        GROUP BY p.PK_PRODUCT_ID";
 
 // Add WHERE clause if needed
 $where = [];
@@ -39,7 +44,7 @@ if (!empty($category)) {
 
 // Add WHERE clause to query if conditions exist
 if (!empty($where)) {
-    $sql .= " WHERE " . implode(' AND ', $where);
+    $sql .= " AND " . implode(' AND ', $where);
 }
 
 // Add ORDER BY clause based on filter
@@ -54,14 +59,14 @@ switch ($filter) {
         $sql .= " ORDER BY p.PRICE DESC";
         break;
     case 'rating':
-        $sql .= " ORDER BY p.RATING DESC";
+        $sql .= " ORDER BY RATING DESC, p.PROD_NAME ASC";
         break;
     default:
         $sql .= " ORDER BY p.CREATED_AT DESC"; // Default sorting
 }
 
 // Pagination handling
-$items_per_page = 18;
+$items_per_page = 20;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $items_per_page;
 
@@ -353,7 +358,7 @@ $result = $conn->query($sql);
 
         .popup {
             position: fixed;
-            top: 20px;
+            top: 55px;
             right: 20px;
             background-color: #4CAF50;
             color: white;
@@ -363,6 +368,36 @@ $result = $conn->query($sql);
             transition: opacity 0.5s ease;
             z-index: 1000;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-card .stock-info {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .product-card .stock-info:before {
+            content: '•';
+            color: #4CAF50;
+            margin-right: 5px;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .rating i {
+            font-size: 16px;
+        }
+
+        .rating-count {
+            color: #666;
+            font-size: 14px;
+            margin-left: 5px;
         }
 
         @media (max-width: 768px) {
@@ -501,7 +536,7 @@ $result = $conn->query($sql);
     <section class="cta">
         <h2>Enhance your PC performance!</h2>
         <p>Enhance your PC performance with the perfect components. Shop now and experience the best deals.</p>
-        <button onclick="window.location.href='login.php'">Place Order</button>
+        <button onclick="window.location.href='index.php'">Place Order</button>
     </section>
 
     <?php include 'footer.php'; ?>

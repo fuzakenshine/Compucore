@@ -17,16 +17,25 @@ if ($product_id) {
     $result = $stmt->get_result();
     $product = $result->fetch_assoc();
 
-    // Fetch reviews using the new table structure
-    $reviews_sql = "SELECT r.*, c.F_NAME, c.L_NAME 
-                   FROM REVIEWS r 
-                   JOIN customer c ON r.FK1_CUSTOMER_ID = c.PK_CUSTOMER_ID 
-                   WHERE r.FK2_PRODUCT_ID = ? 
-                   ORDER BY r.CREATED_AT DESC";
-    $reviews_stmt = $conn->prepare($reviews_sql);
-    $reviews_stmt->bind_param("i", $product_id);
-    $reviews_stmt->execute();
-    $reviews = $reviews_stmt->get_result();
+    // Replace the existing reviews query with this simplified version
+    $reviews_sql = "SELECT r.*, c.F_NAME, c.L_NAME, c.PROFILE_PIC
+                    FROM REVIEWS r
+                    LEFT JOIN customer c ON r.FK1_CUSTOMER_ID = c.PK_CUSTOMER_ID
+                    WHERE r.FK2_PRODUCT_ID = ?
+                    ORDER BY r.CREATED_AT DESC";
+
+    $review_stmt = $conn->prepare($reviews_sql);
+    $review_stmt->bind_param("i", $product_id);
+    $review_stmt->execute();
+    $reviews = $review_stmt->get_result();
+
+    // Calculate average rating
+    $rating_sql = "SELECT AVG(RATING) as avg_rating, COUNT(*) as total_reviews 
+                   FROM REVIEWS WHERE FK2_PRODUCT_ID = ?";
+    $rating_stmt = $conn->prepare($rating_sql);
+    $rating_stmt->bind_param("i", $product_id);
+    $rating_stmt->execute();
+    $rating_info = $rating_stmt->get_result()->fetch_assoc();
 } else {
     echo "Invalid product ID.";
     exit;
@@ -343,34 +352,128 @@ if ($product_id) {
             transition: opacity 0.5s ease;
             z-index: 1000;
         }
+
+        .reviews-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .rating-summary {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .average-rating {
+            text-align: center;
+        }
+
+        .big-rating {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        .total-reviews {
+            color: #666;
+        }
+
+        .review-item {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .reviewer-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .reviewer-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .review-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .review-rating {
+            color: #ffc107;
+        }
+
+        .review-content {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .review-images {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .review-images img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .review-images img:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .rating-summary {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .review-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .review-images img {
+                width: 80px;
+                height: 80px;
+            }
+        }
     </style>
 </head>
 <body>
-<header class="header">
-<!-- Replace the empty div with an img tag -->
-<div class="logo">
-    <a href="index.php">
-        <img src="uploads/LOGOW.PNG" alt="Compucore Logo" height="30">
-    </a>
-</div>
-        <div class="search-bar">
-            <input type="text" placeholder="Search">
-            <button><i class="fas fa-search"></i></button>
-        </div>
-        <div class="icons">
-        <a href="cart.php">
-            <i class="fas fa-shopping-cart"></i>
-        </a>
-            <i class="fas fa-money-bill"></i> 
-        </div>
-        <div class="burger-menu">
-            <button><i class="fas fa-bars"></i></button>
-            <div class="dropdown-content">
-                <a href="profile.php">Profile</a>
-                <a href="landing.php">Logout</a>
-            </div>
-        </div>
-    </header>    
+<?php include 'header.php'; ?>
     <div class="container">
         <div class="product-detail">
             <div class="product-image">
@@ -424,43 +527,68 @@ if ($product_id) {
         <!-- Reviews Section -->
         <div class="reviews-section">
             <h2>Reviews and Ratings</h2>
-            <div class="average-rating">
-                <div class="rating-number"><?php echo number_format($product['avg_rating'] ?? 0, 1); ?></div>
-                <div class="rating-stars">
-                    <?php 
-                    $rating = round($product['avg_rating'] ?? 0);
-                    for($i = 1; $i <= 5; $i++): 
-                    ?>
-                        <i class="fas fa-star <?php echo ($i <= $rating) ? 'active' : ''; ?>"></i>
-                    <?php endfor; ?>
-                </div>
-                <div class="rating-count"><?php echo $product['review_count'] ?? 0; ?> Reviews</div>
-            </div>
-            
             <div class="reviews-list">
                 <?php while($review = $reviews->fetch_assoc()): ?>
                     <div class="review-item">
                         <div class="review-header">
-                            <div class="reviewer-name"><?php echo htmlspecialchars($review['F_NAME'] . ' ' . $review['L_NAME']); ?></div>
-                            <div class="review-stars">
-                                <?php for($i = 1; $i <= 5; $i++): ?>
-                                    <i class="fas fa-star <?php echo ($i <= $review['RATING']) ? 'active' : ''; ?>"></i>
-                                <?php endfor; ?>
+                            <div class="reviewer-info">
+                                <img src="uploads/profiles/<?php echo !empty($review['PROFILE_PIC']) ? 
+                                    htmlspecialchars($review['PROFILE_PIC']) : 'default-avatar.png'; ?>" 
+                                    alt="Reviewer" class="reviewer-avatar">
+                                <div>
+                                    <div class="reviewer-name">
+                                        <?php echo htmlspecialchars($review['F_NAME'] . ' ' . $review['L_NAME']); ?>
+                                    </div>
+                                    <div class="review-date">
+                                        <?php echo date('F d, Y', strtotime($review['CREATED_AT'])); ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="review-rating">
+                                <?php
+                                for($i = 1; $i <= 5; $i++) {
+                                    if($i <= $review['RATING']) {
+                                        echo '<i class="fas fa-star"></i>';
+                                    } else {
+                                        echo '<i class="far fa-star"></i>';
+                                    }
+                                }
+                                ?>
                             </div>
                         </div>
-                        <div class="review-text"><?php echo nl2br(htmlspecialchars($review['COMMENT'])); ?></div>
-                        <div class="review-image">
-                            <?php if(!empty($review['IMAGE'])): ?>
-                                <img src="uploads/reviews/<?php echo htmlspecialchars($review['IMAGE']); ?>" alt="Review Image">
-                            <?php endif; ?>
+                        
+                        <div class="review-content">
+                            <?php echo nl2br(htmlspecialchars($review['COMMENT'])); ?>
                         </div>
-                        <div class="review-date"><?php echo date('F d, Y', strtotime($review['CREATED_AT'])); ?></div>
+
+                        <?php if(!empty($review['IMAGE'])): ?>
+                            <div class="review-images">
+                                <?php 
+                                $images = explode(',', $review['IMAGE']);
+                                foreach ($images as $img): 
+                                    $img = trim($img);
+                                    if ($img):
+                                ?>
+                                    <img src="uploads/reviews/<?php echo htmlspecialchars($img); ?>" 
+                                         alt="Review image" onclick="openImageModal(this.src)">
+                                <?php 
+                                    endif;
+                                endforeach; 
+                                ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endwhile; ?>
             </div>
         </div>
+        </div>
     </div>
     <?php include 'footer.php'; ?>
+
+    <!-- Modal for enlarged review images -->
+    <div id="imageModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;z-index:9999;">
+        <img id="modalImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;">
+    </div>
     <script>
     function showPopup(message) {
         const popup = document.createElement('div');
@@ -503,6 +631,14 @@ if ($product_id) {
         <?php if (isset($_GET['message'])): ?>
             showPopup("<?php echo htmlspecialchars($_GET['message']); ?>");
         <?php endif; ?>
+    };
+
+    function openImageModal(src) {
+        document.getElementById('modalImg').src = src;
+        document.getElementById('imageModal').style.display = 'flex';
+    }
+    document.getElementById('imageModal').onclick = function() {
+        this.style.display = 'none';
     };
     </script>
 </body>

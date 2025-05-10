@@ -1,17 +1,31 @@
 <?php
-require_once 'includes/auth.php';
-checkAdminAccess();
 include 'db_connect.php';
 
+
+$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
+$adminQuery->bind_param("i", $admin_id);
+$adminQuery->execute();
+$adminResult = $adminQuery->get_result();
+$adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
+
+/*
+// Set a default admin ID for testing
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = 1; // Default admin ID
+}
 // Fetch admin name
 $admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
-$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+$result = $adminQuery->get_result();
+$adminName = $result->num_rows > 0 ? $result->fetch_assoc()['full_name'] : 'Admin User';*/
 
 // Supplier query
-$sql = "SELECT PK_SUPPLIER_ID, S_FNAME, S_LNAME, EMAIL, CREATE_AT, COMPANY_NAME, SUPPLIER_IMAGE FROM supplier ORDER BY CREATE_AT DESC";
+$sql = "SELECT PK_SUPPLIER_ID, S_FNAME, S_LNAME, EMAIL, CREATE_AT, COMPANY_NAME, 
+        SUPPLIER_IMAGE FROM supplier 
+        WHERE STATUS = 'Active' 
+        ORDER BY CREATE_AT DESC";
 $result = $conn->query($sql);
 ?>
 
@@ -170,85 +184,111 @@ $result = $conn->query($sql);
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
         }
 
         .modal-content {
             background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
+            margin: 3% auto;
+            padding: 0;
             border-radius: 8px;
-            width: 80%;
+            width: 90%;
             max-width: 600px;
             position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
         }
 
         .modal-header {
+            background-color: #d32f2f;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
         }
 
         .modal-header h2 {
             margin: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .close {
-            color: #aaa;
+            color: white;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
+            transition: transform 0.2s ease;
         }
 
         .close:hover {
-            color: black;
+            transform: scale(1.1);
+        }
+
+        .supplier-id-display {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            color: #666;
+            font-size: 1.1em;
+            border-bottom: 1px solid #eee;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             color: #333;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group label i {
+            color: #d32f2f;
+            width: 16px;
         }
 
         .form-group input[type="text"],
         .form-group input[type="email"] {
             width: 100%;
-            padding: 8px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
+            transition: all 0.3s ease;
         }
 
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
+        .form-group input:focus {
+            border-color: #d32f2f;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
         }
 
-        .btn {
+        .file-input-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .file-input-label {
+            display: inline-block;
             padding: 10px 20px;
-            border: none;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
             border-radius: 4px;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .btn-primary {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .btn-secondary {
-            background-color: #757575;
-            color: white;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
+        .file-input-label:hover {
+            background: #eee;
         }
 
         #current_image_container {
@@ -258,6 +298,133 @@ $result = $conn->query($sql);
         #current_image_container img {
             max-width: 100px;
             border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #b71c1c;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f5f5f5;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-profile-header {
+            text-align: center;
+            padding: 30px 0;
+            background: #d32f2f;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+        }
+
+        .profile-upload-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            border: 4px solid white;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .profile-upload-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .profile-upload-container:hover .upload-overlay {
+            opacity: 1;
+        }
+
+        .upload-overlay i {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .upload-overlay span {
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px;
+        }
+
+        .form-group {
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
         }
     </style>
 </head>
@@ -310,7 +477,7 @@ $result = $conn->query($sql);
                     <td>
                         <div style="display: flex; align-items: center; gap: 10px;">
                         <?php
-                            $photo = !empty($row['SUPPLIER_IMAGE']) ? 'uploads/' . htmlspecialchars($row['SUPPLIER_IMAGE']) : 'assets/default-profile.png';
+                            $photo = !empty($row['SUPPLIER_IMAGE']) ? 'uploads/' . htmlspecialchars($row['SUPPLIER_IMAGE']) : 'profiles/default.png';
                         ?>
                         <img src="<?= $photo ?>" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">                            
                             <div>
@@ -322,10 +489,10 @@ $result = $conn->query($sql);
                     <td><?= date("m/d/Y", strtotime($row['CREATE_AT'])) ?></td>
                     <td><?= htmlspecialchars($row['COMPANY_NAME']) ?></td>
                     <td>
-                        <a href="javascript:void(0)" onclick="openEditModal(<?= htmlspecialchars(json_encode($row)) ?>)" class="action-btn edit">
+                        <a href="javascript:void(0)" class="action-btn edit" onclick='openEditModal(<?= json_encode($row) ?>)'>
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="javascript:void(0)" onclick="deleteSupplier(<?= $row['PK_SUPPLIER_ID'] ?>)" class="action-btn delete">
+                        <a href="javascript:void(0)" class="action-btn delete" onclick="deleteSupplier(<?= $row['PK_SUPPLIER_ID'] ?>)">
                             <i class="fas fa-trash"></i>
                         </a>
                     </td>
@@ -337,42 +504,61 @@ $result = $conn->query($sql);
 
     <!-- Edit Modal -->
     <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit Supplier</h2>
-                <span class="close">&times;</span>
+        <div class="modal-content">            
+            <div class="modal-profile-header">
+                <div class="profile-upload-container" onclick="document.getElementById('edit_image').click()">
+                    <img id="profile_preview" src="assets/default-profile.png" alt="Profile Picture">
+                    <div class="upload-overlay">
+                        <i class="fas fa-camera"></i>
+                        <span>Change Photo</span>
+                    </div>
+                </div>
             </div>
+
             <form id="editForm" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="supplier_id" id="edit_supplier_id">
-                <div class="form-group">
-                    <label for="edit_fname">First Name</label>
-                    <input type="text" id="edit_fname" name="fname" required>
-                </div>
                 
-                <div class="form-group">
-                    <label for="edit_lname">Last Name</label>
-                    <input type="text" id="edit_lname" name="lname" required>
+                <div class="supplier-id-display">
+                    Supplier #<span id="supplier_number"></span>
                 </div>
-                
-                <div class="form-group">
-                    <label for="edit_email">Email</label>
-                    <input type="email" id="edit_email" name="email" required>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit_fname"><i class="fas fa-user"></i> First Name</label>
+                        <input type="text" id="edit_fname" name="fname" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_lname"><i class="fas fa-user"></i> Last Name</label>
+                        <input type="text" id="edit_lname" name="lname" required>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="edit_company">Company Name</label>
-                    <input type="text" id="edit_company" name="company" required>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit_email"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="edit_email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_company"><i class="fas fa-building"></i> Company Name</label>
+                        <input type="text" id="edit_company" name="company" required>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="edit_image">Profile Image</label>
-                    <div id="current_image_container"></div>
-                    <input type="file" id="edit_image" name="image" accept="image/*">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit_image"><i class="fas fa-image"></i> Supplier Image</label>
+                        <input type="file" id="edit_image" name="image" accept="image/*">
+                    </div>
                 </div>
-                
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
                 </div>
             </form>
         </div>
@@ -384,21 +570,49 @@ $result = $conn->query($sql);
     const closeBtn = document.getElementsByClassName('close')[0];
 
     function openEditModal(supplier) {
-        document.getElementById('edit_supplier_id').value = supplier.PK_SUPPLIER_ID;
-        document.getElementById('edit_fname').value = supplier.S_FNAME;
-        document.getElementById('edit_lname').value = supplier.S_LNAME;
-        document.getElementById('edit_email').value = supplier.EMAIL;
-        document.getElementById('edit_company').value = supplier.COMPANY_NAME;
-        
-        // Handle current image display
-        const imageContainer = document.getElementById('current_image_container');
-        if (supplier.SUPPLIER_IMAGE) {
-            imageContainer.innerHTML = `<img src="uploads/${supplier.SUPPLIER_IMAGE}" alt="Current profile">`;
-        } else {
-            imageContainer.innerHTML = '';
+        try {
+            // Parse the supplier data if it's a string
+            if (typeof supplier === 'string') {
+                supplier = JSON.parse(supplier);
+            }
+            
+            // Fetch the latest supplier data from the server
+            fetch(`get_supplier.php?id=${supplier.PK_SUPPLIER_ID}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const supplierData = data.supplier;
+                        
+                        // Update form fields with the fetched data
+                        document.getElementById('edit_supplier_id').value = supplierData.PK_SUPPLIER_ID;
+                        document.getElementById('supplier_number').textContent = supplierData.PK_SUPPLIER_ID;
+                        document.getElementById('edit_fname').value = supplierData.S_FNAME;
+                        document.getElementById('edit_lname').value = supplierData.S_LNAME;
+                        document.getElementById('edit_email').value = supplierData.EMAIL;
+                        document.getElementById('edit_company').value = supplierData.COMPANY_NAME;
+                        
+                        // Update profile preview
+                        const profilePreview = document.getElementById('profile_preview');
+                        if (supplierData.SUPPLIER_IMAGE) {
+                            profilePreview.src = `uploads/${supplierData.SUPPLIER_IMAGE}`;
+                        } else {
+                            profilePreview.src = 'assets/default-profile.png';
+                        }
+                        
+                        // Show the modal
+                        modal.style.display = 'block';
+                    } else {
+                        alert('Error fetching supplier data: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error fetching supplier data');
+                });
+        } catch (error) {
+            console.error('Error opening modal:', error);
+            alert('Error opening edit form');
         }
-        
-        modal.style.display = 'block';
     }
 
     function closeEditModal() {
@@ -414,31 +628,92 @@ $result = $conn->query($sql);
     }
 
     // Handle form submission
-    document.getElementById('editForm').onsubmit = function(e) {
+    document.getElementById('editForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(this);
+        
+        // Add the file if it exists
+        const fileInput = document.getElementById('edit_image');
+        if (fileInput.files.length > 0) {
+            formData.append('image', fileInput.files[0]);
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        submitBtn.disabled = true;
+        
+        // Debug: Log the form data being sent
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
         
         fetch('Admin_edit_supplier.php', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Server response:', data); // Debug log
             if (data.success) {
-                window.location.reload();
+                alert('Supplier updated successfully!');
+                closeEditModal();
+                // Force reload the page to show updated data
+                window.location.href = window.location.href;
             } else {
-                alert('Error updating supplier: ' + data.message);
+                alert(data.message || 'Error updating supplier');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while updating the supplier');
+            alert('Error updating supplier: ' + error.message);
+        })
+        .finally(() => {
+            // Reset button state
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         });
-    };
+    });
+
+    // Update the file input handler
+    document.getElementById('edit_image').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('profile_preview').src = e.target.result;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
 
     function deleteSupplier(supplierId) {
         if (confirm('Are you sure you want to delete this supplier?')) {
-            window.location.href = 'Admin_delete_supplier.php?id=' + supplierId;
+            fetch('Admin_delete_supplier.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ supplier_id: supplierId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting supplier');
+            });
         }
     }
     </script>

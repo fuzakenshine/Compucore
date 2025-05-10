@@ -10,9 +10,20 @@ if (!isset($_SESSION['loggedin'])) {
     exit();
 }
 
+// Function to check product stock
+function checkProductStock($conn, $product_id, $requested_qty) {
+    $sql = "SELECT QTY FROM products WHERE PK_PRODUCT_ID = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $product_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['QTY'] >= $requested_qty;
+}
+
 // Fetch cart items for the logged-in user
 $user_id = $_SESSION['customer_id'];
-$sql = "SELECT c.*, p.IMAGE, p.PROD_NAME 
+$sql = "SELECT c.*, p.IMAGE, p.PROD_NAME, p.QTY as available_stock 
         FROM cart c 
         JOIN products p ON c.product_id = p.PK_PRODUCT_ID 
         WHERE c.customer_id = ? 
@@ -21,6 +32,53 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Handle AJAX quantity updates
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_quantity') {
+    $response = array('success' => false, 'message' => '');
+    
+    try {
+        $cart_id = intval($_POST['cart_id']);
+        $new_qty = intval($_POST['quantity']);
+        
+        // Get current cart item
+        $check_sql = "SELECT c.*, p.QTY as available_stock 
+                     FROM cart c 
+                     JOIN products p ON c.product_id = p.PK_PRODUCT_ID 
+                     WHERE c.cart_id = ? AND c.customer_id = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("ii", $cart_id, $user_id);
+        $check_stmt->execute();
+        $cart_item = $check_stmt->get_result()->fetch_assoc();
+        
+        if (!$cart_item) {
+            throw new Exception("Cart item not found");
+        }
+        
+        // Check if requested quantity exceeds available stock
+        if ($new_qty > $cart_item['available_stock']) {
+            throw new Exception("Order quantity exceeds available stock. Only " . $cart_item['available_stock'] . " items available.");
+        }
+        
+        // Update quantity
+        $update_sql = "UPDATE cart SET quantity = ? WHERE cart_id = ? AND customer_id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("iii", $new_qty, $cart_id, $user_id);
+        
+        if ($update_stmt->execute()) {
+            $response['success'] = true;
+            $response['message'] = "Quantity updated successfully";
+        } else {
+            throw new Exception("Failed to update quantity");
+        }
+    } catch (Exception $e) {
+        $response['message'] = $e->getMessage();
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -408,6 +466,7 @@ $result = $stmt->get_result();
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin: 40px auto;
             max-width: 400px;
+            margin-bottom: 250px;
         }
 
         .empty-cart i {
@@ -438,6 +497,33 @@ $result = $stmt->get_result();
             background:rgb(172, 47, 47);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .stock-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .stock-warning {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .popup.error {
+            background-color: #d32f2f;
+        }
+
+        .quantity-controls input[type="number"] {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        .quantity-controls input[type="number"]:invalid {
+            border-color: #d32f2f;
         }
         </style>
 </head>
@@ -470,6 +556,9 @@ $result = $stmt->get_result();
                             <div class="price-details">
                                 <p>Price: ₱<?php echo number_format($row['product_price'], 2); ?></p>
                                 <p class="item-total">Total: ₱<?php echo number_format($total, 2); ?></p>
+                                <p class="stock-info <?php echo $row['quantity'] > $row['available_stock'] ? 'stock-warning' : ''; ?>">
+                                    Available Stock: <?php echo $row['available_stock']; ?>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -479,7 +568,8 @@ $result = $stmt->get_result();
                                 <i class="fas fa-minus"></i>
                             </button>
                             <input type="number" value="<?php echo $row['quantity']; ?>" 
-                                   min="1" max="99" readonly
+                                   min="1" max="<?php echo $row['available_stock']; ?>" 
+                                   data-max="<?php echo $row['available_stock']; ?>"
                                    onchange="event.stopPropagation(); updateQuantity(<?php echo $row['cart_id']; ?>, 'set', this.value)">
                             <button onclick="event.stopPropagation(); updateQuantity(<?php echo $row['cart_id']; ?>, 'increase')">
                                 <i class="fas fa-plus"></i>
@@ -531,11 +621,11 @@ $result = $stmt->get_result();
         return confirm("Are you sure you want to remove this item?");
     }
 
-    function showPopup(message) {
+    function showPopup(message, isError = false) {
         const popup = document.createElement('div');
-        popup.className = 'popup';
+        popup.className = 'popup ' + (isError ? 'error' : '');
         popup.innerHTML = `
-            <i class="fas fa-info-circle"></i> 
+            <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> 
             ${message}
         `;
         document.body.appendChild(popup);
@@ -562,31 +652,46 @@ $result = $stmt->get_result();
     };
 
     function updateQuantity(cartId, action, value = null) {
-        // Store checked items before update
-        const checkedItems = Array.from(document.querySelectorAll('.item-checkbox:checked'))
-            .map(checkbox => checkbox.value);
+        const input = document.querySelector(`input[data-max]`);
+        const maxStock = parseInt(input.dataset.max);
+        let newQty;
+
+        if (action === 'set') {
+            newQty = parseInt(value);
+        } else {
+            const currentQty = parseInt(input.value);
+            newQty = action === 'increase' ? currentQty + 1 : currentQty - 1;
+        }
+
+        if (newQty > maxStock) {
+            showPopup(`Order quantity exceeds available stock. Only ${maxStock} items available.`, true);
+            return;
+        }
+
+        if (newQty < 1) {
+            showPopup('Quantity must be at least 1', true);
+            return;
+        }
 
         let formData = new FormData();
         formData.append('cart_id', cartId);
-        formData.append('action', action);
-        if (value) formData.append('value', value);
+        formData.append('action', 'update_quantity');
+        formData.append('quantity', newQty);
 
-        fetch('update_cart_quantity.php', {
+        fetch('cart.php', {
             method: 'POST',
             body: formData
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Store checked items in sessionStorage before reload
-                sessionStorage.setItem('checkedItems', JSON.stringify(checkedItems));
                 location.reload();
             } else {
-                showPopup(data.message || 'Error updating quantity');
+                showPopup(data.message || 'Error updating quantity', true);
             }
         })
         .catch(error => {
-            showPopup('Error updating quantity');
+            showPopup('Error updating quantity', true);
         });
     }
 

@@ -11,6 +11,26 @@ if (!isset($_SESSION['loggedin'])) {
 $customer_id = $_SESSION['customer_id'];
 $message = '';
 
+// Handle profile picture upload
+if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
+    $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+    $filename = $_FILES['profile_pic']['name'];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    
+    if (in_array($ext, $allowed)) {
+        $new_filename = uniqid() . '.' . $ext;
+        $upload_path = 'uploads/profiles/' . $new_filename;
+        
+        if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_path)) {
+            // Update database with new profile picture
+            $sql = "UPDATE customer SET PROFILE_PIC = ? WHERE PK_CUSTOMER_ID = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("si", $new_filename, $customer_id);
+            $stmt->execute();
+        }
+    }
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name = $_POST['first_name'];
@@ -169,18 +189,19 @@ $customer = $result->fetch_assoc();
 
         .profile-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            padding: 20px;
         }
 
         .profile-header h1 {
+            margin: 15px 0 5px;
             color: #333;
-            margin: 0;
             font-size: 24px;
         }
 
         .profile-header p {
             color: #666;
-            margin: 10px 0 0;
+            margin: 0;
         }
 
         .form-group {
@@ -260,23 +281,182 @@ $customer = $result->fetch_assoc();
             flex-direction: column;
             gap: 20px;
         }
+
+        .profile-pic-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 4px solid #fff;
+        }
+
+        .profile-pic-container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .profile-pic-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .profile-pic-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .profile-pic-overlay i {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .profile-pic-overlay span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .profile-pic-container:hover .profile-pic-overlay {
+            opacity: 1;
+        }
+
+        .form-group input[type="file"] {
+            padding: 8px;
+            border: 1px dashed #ddd;
+            background: #f9f9f9;
+        }
+
+        .profile-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-label {
+            color: #666;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-label i {
+            color: #d32f2f;
+            width: 20px;
+        }
+
+        .detail-value {
+            color: gray;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .section-divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .section-divider:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .section-divider span {
+            background: white;
+            padding: 0 15px;
+            color: #666;
+            position: relative;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="topnav">
-        <div class="topnav-left">
-            <a href="index.php" class="back-button">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
-            <h1 class="topnav-title">My Profile</h1>
-        </div>
-    </div>
+<?php include 'header.php'; ?>
 
     <div class="container">
         <div class="profile-card">
             <div class="profile-header">
-                <h1>My Profile</h1>
+                <div class="profile-pic-container">
+                    <img src="uploads/profiles/<?php echo !empty($customer['PROFILE_PIC']) ? htmlspecialchars($customer['PROFILE_PIC']) : 'default-avatar.png'; ?>" 
+                         alt="Profile Picture" 
+                         id="profile-pic">
+                    <div class="profile-pic-overlay">
+                        <i class="fas fa-camera"></i>
+                        <span>Change Photo</span>
+                    </div>
+                    <input type="file" id="profile-pic-input" name="profile_pic" accept="image/*" style="display: none;">
+                </div>
+                <h1><?php echo htmlspecialchars($customer['F_NAME'] . ' ' . $customer['L_NAME']); ?></h1>
                 <p>Manage your account information</p>
+            </div>
+
+            <div class="profile-details">
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-user"></i> Full Name</span>
+                        <span class="detail-value"><?php echo htmlspecialchars($customer['F_NAME'] . ' ' . $customer['L_NAME']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-envelope"></i> Email</span>
+                        <span class="detail-value"><?php echo htmlspecialchars($customer['EMAIL']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-phone"></i> Phone</span>
+                        <span class="detail-value"><?php echo htmlspecialchars($customer['PHONE_NUM']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-map-marker-alt"></i> Address</span>
+                        <span class="detail-value"><?php echo htmlspecialchars($customer['CUSTOMER_ADDRESS']); ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider">
+                <span>Edit Profile</span>
             </div>
 
             <?php if ($message): ?>
@@ -285,7 +465,7 @@ $customer = $result->fetch_assoc();
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="">
+            <form method="POST" action="" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="first_name">First Name</label>
                     <input type="text" id="first_name" name="first_name" value="<?php echo htmlspecialchars($customer['F_NAME']); ?>" required>
@@ -310,7 +490,6 @@ $customer = $result->fetch_assoc();
                     <label for="phone_num">Phone Number</label>
                     <input type="tel" id="phone_num" name="phone_num" value="<?php echo htmlspecialchars($customer['PHONE_NUM']); ?>" required>
                 </div>
-
                 <div class="form-group">
                     <label for="old_password">Current Password (leave blank if not changing)</label>
                     <input type="password" id="old_password" name="old_password">
@@ -332,8 +511,66 @@ $customer = $result->fetch_assoc();
     </div>
 
     <?php include 'footer.php'; ?>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const profilePicContainer = document.querySelector('.profile-pic-container');
+        const profilePicInput = document.getElementById('profile-pic-input');
+        const profilePic = document.getElementById('profile-pic');
+        
+        // Click handler for the profile picture container
+        profilePicContainer.addEventListener('click', function() {
+            profilePicInput.click();
+        });
+        
+        // Handle file selection
+        profilePicInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                const file = this.files[0];
+                
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                reader.onload = function(e) {
+                    // Show preview immediately
+                    profilePic.src = e.target.result;
+                    
+                    // Create form data for upload
+                    const formData = new FormData();
+                    formData.append('profile_pic', file);
+                    
+                    // Upload the image
+                    fetch('profile.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.ok ? response.text() : Promise.reject('Upload failed'))
+                    .then(() => {
+                        // Show success message
+                        const message = document.createElement('div');
+                        message.className = 'message success';
+                        message.textContent = 'Profile picture updated successfully!';
+                        document.querySelector('.profile-header').appendChild(message);
+                        
+                        // Remove message after 3 seconds
+                        setTimeout(() => message.remove(), 3000);
+                    })
+                    .catch(error => {
+                        alert('Error uploading profile picture: ' + error);
+                    });
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+    </script>
 </body>
 </html>
 <?php
 $conn->close();
-?> 
+?>

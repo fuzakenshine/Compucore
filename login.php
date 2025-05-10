@@ -1,60 +1,84 @@
 <?php
 session_start();
 include 'db_connect.php';
+include 'includes/auth.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
-
-    // Try admin login first
-    $stmt = $conn->prepare("SELECT * FROM users WHERE EMAIL = ? AND IS_ADMIN = 1");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
     
-    if ($result->num_rows > 0) {
-        $user = $result->fetch_assoc();
+    try {
+        // First check if it's an admin
+        $stmt = $conn->prepare("SELECT PK_ADMIN_ID, F_NAME, L_NAME, PASSWORD_HASH FROM admin WHERE EMAIL = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        if (password_verify($password, $user['PASSWORD_HASH'])) {
-            $_SESSION['loggedin'] = true;
-            $_SESSION['user_id'] = $user['PK_USER_ID'];
-            $_SESSION['email'] = $user['EMAIL'];
-            $_SESSION['is_admin'] = 1;
-            header("Location: Admin_home.php");
-            exit();
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+            
+            if (password_verify($password, $user['PASSWORD_HASH'])) {
+                // Set admin session variables
+                $_SESSION['user_id'] = $user['PK_ADMIN_ID'];
+                $_SESSION['user_name'] = $user['F_NAME'] . ' ' . $user['L_NAME'];
+                $_SESSION['user_type'] = 'admin';
+                $_SESSION['loggedin'] = true;
+                $_SESSION['last_activity'] = time();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Login successful!',
+                    'redirect' => './Admin_home.php' // Add ./ to ensure relative path from current directory
+                ]);
+                exit();
+            }
         }
-    }
-
-    // If not admin, check customer table (keep your existing customer login code)
-    $stmt = $conn->prepare("SELECT * FROM customer WHERE EMAIL = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $customer = $result->fetch_assoc();
-        if (password_verify($password, $customer['PASSWORD_HASH'])) {
-            $_SESSION['loggedin'] = true;
-            $_SESSION['customer_id'] = $customer['PK_CUSTOMER_ID'];
-            $_SESSION['email'] = $customer['EMAIL'];
-            header("Location: index.php");
-            exit();
+        
+        // If not admin, check if customer
+        $stmt = $conn->prepare("SELECT PK_CUSTOMER_ID, F_NAME, L_NAME, PASSWORD_HASH FROM customer WHERE EMAIL = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+            
+            if (password_verify($password, $user['PASSWORD_HASH'])) {
+                // Set customer session variables
+                $_SESSION['user_id'] = $user['PK_CUSTOMER_ID'];
+                $_SESSION['user_name'] = $user['F_NAME'] . ' ' . $user['L_NAME'];
+                $_SESSION['user_type'] = 'customer';
+                $_SESSION['loggedin'] = true;
+                $_SESSION['customer_id'] = $user['PK_CUSTOMER_ID'];
+                $_SESSION['last_activity'] = time();
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Login successful!',
+                    'redirect' => 'index.php'
+                ]);
+                exit();
+            }
         }
+        
+        echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
     }
-
-    $_SESSION['error'] = "Invalid email or password";
-    header("Location: login.php");
     exit();
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login - CompuCore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-material-ui/material-ui.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -109,49 +133,72 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             width: 100%;
             max-width: 300px;
         }
-        .right form input {
-            width: 100%;
-            padding: 10px;
+        .form-group {
+            position: relative;
             margin-bottom: 15px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
         }
-        .right form button {
+        .form-group input:focus {
+            border-color: #d32f2f;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+        }
+        .input-with-icon {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+        }
+        button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #d32f2f;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
-        .right form button:hover {
+        button:hover {
             background-color: #b71c1c;
         }
-        .right .register {
-            margin-top: 10px;
+        .register {
+            margin-top: 20px;
             text-align: center;
         }
-        .right .register a {
+        .register a {
             color: #d32f2f;
             text-decoration: none;
         }
-        .right .register a:hover {
+        .register a:hover {
             text-decoration: underline;
         }
-        .error {
-            color: red;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
         .logo {
-            margin-bottom: -10px;
+            margin-bottom: 20px;
             text-align: center;
         }
         .logo img {
-            width: 150px; /* Adjust the size as needed */
+            width: 150px;
             height: auto;
+        }
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
         }
     </style>
 </head>
@@ -164,21 +211,108 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
     <div class="right">
-    <div class="logo">
-        <img src="uploads/logo.png" alt="CompuCore Logo">
-    </div>
-        <h1>Enhance your PC performance!</h1>
-        <form method="POST">
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
-            <?php endif; ?>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+        <div class="logo">
+            <img src="uploads/logo.png" alt="CompuCore Logo">
+        </div>
+        <h1>Welcome Back!</h1>
+        
+        <form id="loginForm" method="POST" novalidate>
+            <div class="form-group">
+                <input type="email" name="email" id="email" placeholder="Gmail Address" required>
+                <div class="error-message" id="email_error"></div>
+            </div>
+            
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <input type="password" name="password" id="password" placeholder="Password" required>
+                    <i class="fas fa-eye toggle-password" onclick="togglePassword('password')"></i>
+                </div>
+                <div class="error-message" id="password_error"></div>
+            </div>
+            
+            <button type="submit" id="submitBtn" style="background-color: #d32f2f; color: white; width: 36vh;">Login</button>
         </form>
+        
         <div class="register">
-            No account yet? <a href="register.php">Register here!</a>
+            Don't have an account? <a href="register.php">Register here!</a>
         </div>
     </div>
+    
+    <script>
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        function validateEmail(input) {
+            const emailError = document.getElementById('email_error');
+            const isGmail = /@gmail\.com$/.test(input.value);
+            const isValidFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
+            
+            emailError.style.display = (isValidFormat && isGmail) ? 'none' : 'block';
+            emailError.textContent = !isValidFormat ? 'Please enter a valid email address' : 
+                                   !isGmail ? 'Email must be a Gmail address' : '';
+            return isValidFormat && isGmail;
+        }
+        
+        document.getElementById('email').addEventListener('input', function() {
+            validateEmail(this);
+        });
+        
+  // In your login.php file, update the form submission handler
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const isValidEmail = validateEmail(document.getElementById('email'));
+    
+    if (isValidEmail) {
+        const formData = new FormData(this);
+        
+        fetch('login.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin' // Add this line to ensure cookies are sent
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Login Successful!',
+                    text: 'Welcome back!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    // Use window.location.replace for more reliable redirect
+                    window.location.replace(data.redirect);
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: data.message
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Something went wrong! Please try again.'
+            });
+        });
+    }
+});
+    </script>
 </body>
 </html>

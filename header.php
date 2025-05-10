@@ -125,29 +125,65 @@
             position: absolute;
             right: 0;
             background-color: white;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            border-radius: 8px;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 12px;
             overflow: hidden;
             animation: fadeIn 0.2s ease;
+            margin-top: 10px;
         }
         
         .header .dropdown-content a {
             color: #333;
-            padding: 12px 16px;
+            padding: 12px 20px;
             text-decoration: none;
-            display: block;
-            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+        
+        .header .dropdown-content a i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 16px;
         }
         
         .header .dropdown-content a:hover {
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
             color: #d32f2f;
         }
         
-        .header .burger-menu:hover .dropdown-content {
-            display: block;
+        .header .dropdown-content a:hover i {
+            color: #d32f2f;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 8px 0;
+        }
+        
+        .logout-link {
+            color: #d32f2f !important;
+        }
+        
+        .logout-link i {
+            color: #d32f2f !important;
+        }
+        
+        .header .dropdown-content:before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 12px;
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            transform: rotate(45deg);
+            box-shadow: -2px -2px 2px rgba(0,0,0,0.02);
         }
         
         /* Enhanced notification styles */
@@ -364,6 +400,32 @@
             margin-bottom: 10px;
             display: block;
         }
+
+        /* Add this to your existing styles */
+        .cart-icon {
+            position: relative;
+            display: inline-block;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #ff4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+            min-width: 10px;
+            text-align: center;
+        }
+
+        .cart-icon:hover .cart-badge {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -374,8 +436,10 @@
             </a>
         </div>
         <div class="search-bar">
-            <input type="text" placeholder="Search">
-            <button><i class="fas fa-search"></i></button>
+            <form action="search_results.php" method="GET">
+                <input type="text" name="search_query" placeholder="Search products..." required>
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
         </div>
         <div class="icons">
             <div class="notification-icon">
@@ -394,20 +458,23 @@
                     </div>
                 </div>
             </div>
-            <a href="cart.php">
+            <a href="cart.php" class="cart-icon">
                 <i class="fas fa-shopping-cart"></i>
+                <span class="cart-badge" id="cart-count">0</span>
             </a>
-            <a href="customer_order_details.php">
+            <a href="my_orders.php">
                 <i class="fas fa-money-bill"></i> 
             </a>
-        </div>
-        <div class="burger-menu">
-            <button><i class="fas fa-bars"></i></button>
-            <div class="dropdown-content">
-                <a href="profile.php">Profile</a>
-                <a href="landing.php">Logout</a>
+            <div class="burger-menu" id="burger-menu">
+                <button><i class="fas fa-bars"></i></button>
+                <div class="dropdown-content">
+                    <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="landing.php" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
             </div>
         </div>
+
     </header>
     
     <script>
@@ -530,6 +597,46 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateNotifications();
         });
+
+        // Add this to the script section of header.php
+        document.addEventListener('DOMContentLoaded', function() {
+            const burgerMenu = document.getElementById('burger-menu');
+            const button = burgerMenu.querySelector('button');
+            const dropdown = burgerMenu.querySelector('.dropdown-content');
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!burgerMenu.contains(event.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle dropdown on button click
+            button.addEventListener('click', function(event) {
+                event.stopPropagation();
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+
+        // Add this to your existing script section
+        function updateCartCount() {
+            fetch('get_cart_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    const cartCount = document.getElementById('cart-count');
+                    cartCount.textContent = data.count;
+                    cartCount.style.display = data.count > 0 ? 'block' : 'none';
+                })
+                .catch(error => console.error('Error updating cart count:', error));
+        }
+
+        // Update cart count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
+
+        // Update cart count every 30 seconds
+        setInterval(updateCartCount, 30000);
     </script>
 </body>
 </html>

@@ -2,12 +2,12 @@
 include 'db_connect.php'; 
 session_start();
 
-// Get logged in admin ID
 $admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
-$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+$adminResult = $adminQuery->get_result();
+$adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Use the logged-in admin's ID instead of hard-coded value
@@ -19,6 +19,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone = $_POST['phone'];
     $company = $_POST['company'];
     $address = $_POST['address'];
+
+    // Server-side validation
+    $errors = [];
+    if (!preg_match("/^[A-Za-z .'-]+$/", $fname)) {
+        $errors[] = "First name is invalid.";
+    }
+    if (!preg_match("/^[A-Za-z .'-]+$/", $lname)) {
+        $errors[] = "Last name is invalid.";
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Email is invalid.";
+    }
+    if (!preg_match("/^\\+?\\d{10,15}$/", $phone)) {
+        $errors[] = "Phone number is invalid.";
+    }
+    if (strlen($company) < 2) {
+        $errors[] = "Company name is too short.";
+    }
+    if (strlen($address) < 2) {
+        $errors[] = "Address is too short.";
+    }
+    if (empty($_FILES['photo']['name'])) {
+        $errors[] = "Photo is required.";
+    }
+    if (!empty($errors)) {
+        echo "<script>alert('" . implode("\\n", $errors) . "'); window.history.back();</script>";
+        exit;
+    }
 
     // Handle image upload
     $image = $_FILES['photo']['name'];
@@ -144,8 +172,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             max-width: 100%;
         }
 
+        input, textarea, input[type="email"], input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff;
+            box-sizing: border-box;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
         .form-group {
-            flex: 1 1 calc(50% - 10px);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .form-group label {
@@ -153,14 +200,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 8px;
             color: #333;
             font-weight: 500;
-        }
-
-        input, textarea {
-            width: 90%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
         }
 
         button {
@@ -209,37 +248,99 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <h1>Add Supplier</h1>
         </div>
         <form method="post" enctype="multipart/form-data">
-        <div class="form-group">
-            <label>First Name: <input type="text" name="fname" required></label>
-        </div>
-        <div class="form-group">
-            <label>Last Name: <input type="text" name="lname" required></label>
-        </div>
-        <div class="form-group">
-            <label>Email: <input type="email" name="email" required></label>
-        </div>
-        <div class="form-group">
-            <label>Phone Number: <input type="text" name="phone" required></label>
-        </div>
-        <div class="form-group">
-            <label>Company Name: <input type="text" name="company" required></label>
-        </div>
-        <div class="form-group">
-            <label>Address: <input type="text" name="address" required></label>
-        </div>
-        <div class="form-group" style="flex: 1 1 90%;">
-            <label>Photo:</label>
-            <div style="display: flex; align-items: center; width: 97%;">
-                <input type="file" name="photo" accept="image/*" required style="flex: 1; width: 80%;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name: <input type="text" name="fname" required></label>
+                </div>
+                <div class="form-group">
+                    <label>Last Name: <input type="text" name="lname" required></label>
+                </div>
             </div>
-        </div>
-        <button type="submit">Add Supplier</button>
-    </form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email: <input type="email" name="email" required></label>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number: <input type="text" name="phone" required></label>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Company Name: <input type="text" name="company" required></label>
+                </div>
+                <div class="form-group">
+                    <label>Address: <input type="text" name="address" required></label>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>Photo:</label>
+                    <input type="file" name="photo" accept="image/*" required>
+                </div>
+            </div>
+            <button type="submit">Add Supplier</button>
+        </form>
 
     <script>
         document.querySelector('input[type="file"]').addEventListener('change', function(e) {
             const fileName = e.target.files.length > 0 ? e.target.files[0].name : 'No file chosen';
             document.getElementById('placeholderText').textContent = fileName;
+        });
+        // Client-side validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            let valid = true;
+            let messages = [];
+
+            const fname = this.fname.value.trim();
+            const lname = this.lname.value.trim();
+            const email = this.email.value.trim();
+            const phone = this.phone.value.trim();
+            const company = this.company.value.trim();
+            const address = this.address.value.trim();
+            const photo = this.photo.value;
+
+            // Name validation
+            if (!fname.match(/^[A-Za-z .'-]+$/)) {
+                valid = false;
+                messages.push("First name is invalid.");
+            }
+            if (!lname.match(/^[A-Za-z .'-]+$/)) {
+                valid = false;
+                messages.push("Last name is invalid.");
+            }
+
+            // Email validation
+            if (!email.match(/^[^@]+@[^@]+\.[^@]+$/)) {
+                valid = false;
+                messages.push("Email is invalid.");
+            }
+
+            // Phone validation (Philippines format, adjust as needed)
+            if (!phone.match(/^\+?\d{10,15}$/)) {
+                valid = false;
+                messages.push("Phone number is invalid.");
+            }
+
+            // Company and address
+            if (company.length < 2) {
+                valid = false;
+                messages.push("Company name is too short.");
+            }
+            if (address.length < 2) {
+                valid = false;
+                messages.push("Address is too short.");
+            }
+
+            // Photo required
+            if (!photo) {
+                valid = false;
+                messages.push("Photo is required.");
+            }
+
+            if (!valid) {
+                e.preventDefault();
+                alert(messages.join("\n"));
+            }
         });
     </script>
     </div>

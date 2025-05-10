@@ -1,41 +1,59 @@
 <?php
-require_once 'includes/auth.php';
-checkAdminAccess();
+session_start();
 include 'db_connect.php';
 
-// Get supplier ID from URL
-$supplier_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+header('Content-Type: application/json');
 
-if ($supplier_id === 0) {
-    header('Location: Admin_suppliers.php');
-    exit();
+if (!isset($_SESSION['user_id'])) {
+    die(json_encode(['success' => false, 'message' => 'Unauthorized']));
 }
 
-// Get supplier image before deletion
-$stmt = $conn->prepare("SELECT SUPPLIER_IMAGE FROM supplier WHERE PK_SUPPLIER_ID = ?");
-$stmt->bind_param("i", $supplier_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$supplier = $result->fetch_assoc();
-
-// Delete supplier from database
-$stmt = $conn->prepare("DELETE FROM supplier WHERE PK_SUPPLIER_ID = ?");
-$stmt->bind_param("i", $supplier_id);
-
-if ($stmt->execute()) {
-    // Delete supplier image if exists
-    if ($supplier && $supplier['SUPPLIER_IMAGE']) {
-        $image_path = "uploads/" . $supplier['SUPPLIER_IMAGE'];
-        if (file_exists($image_path)) {
-            unlink($image_path);
-        }
+try {
+    // Get POST data
+    $raw_data = file_get_contents('php://input');
+    if (empty($raw_data)) {
+        throw new Exception('No data received');
     }
+
+    // Decode JSON data
+    $data = json_decode($raw_data, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Invalid JSON data');
+    }
+
+    if (!isset($data['supplier_id'])) {
+        throw new Exception('Supplier ID is required');
+    }
+
+    // Sanitize and validate supplier ID
+    $supplier_id = filter_var($data['supplier_id'], FILTER_VALIDATE_INT);
+    if ($supplier_id === false) {
+        throw new Exception('Invalid supplier ID format');
+    }
+
+    // Update supplier status
+    $stmt = $conn->prepare("UPDATE supplier SET STATUS = 'Inactive', UPDATE_AT = CURRENT_TIMESTAMP WHERE PK_SUPPLIER_ID = ?");
+    $stmt->bind_param("i", $supplier_id);
     
-    header('Location: Admin_suppliers.php');
-    exit();
-} else {
-    // Handle error
-    header('Location: Admin_suppliers.php?error=delete_failed');
-    exit();
+    if (!$stmt->execute()) {
+        throw new Exception('Database error: ' . $stmt->error);
+    }
+
+    if ($stmt->affected_rows === 0) {
+        throw new Exception('Supplier not found');
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Supplier deactivated successfully'
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error: ' . $e->getMessage()
+    ]);
 }
-?> 
+
+$conn->close();
+?>

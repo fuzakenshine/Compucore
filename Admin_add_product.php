@@ -6,7 +6,16 @@ $admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
+$adminResult = $adminQuery->get_result();
+$adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
+/**
+
+$admin_id = $_SESSION['user_id'];
+$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
+$adminQuery->bind_param("i", $admin_id);
+$adminQuery->execute();
 $adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+*/
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,12 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $target_file = $target_dir . basename($image);
 
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-        // Update the SQL query to include PROD_SPEC
-        $sql = "INSERT INTO PRODUCTS (FK1_CATEGORY_ID, FK2_SUPPLIER_ID, PROD_NAME, PROD_DESC, PROD_SPECS    , PRICE, QTY, IMAGE, UPDATED_AT) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-                
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iisssdis", $category_id, $supplier_id, $prod_name, $prod_desc, $prod_spec, $price, $qty, $image);
+        // Use stored procedure to insert product
+        $stmt = $conn->prepare("CALL populatePRODUCTS('CREATE', 0, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param(
+            "iisssdis",
+            $category_id, $supplier_id, $prod_name, $prod_desc, $prod_spec, $price, $qty, $image
+        );
 
         if ($stmt->execute()) {
             echo "<script>alert('Product added successfully!'); window.location.href='Admin_product.php';</script>";
@@ -298,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="" disabled selected>Supplier</option>
                         <?php
                         // Fetch suppliers from the database
-                        $supplier_sql = "SELECT PK_SUPPLIER_ID, COMPANY_NAME FROM supplier";
+                        $supplier_sql = "SELECT PK_SUPPLIER_ID, COMPANY_NAME FROM supplier WHERE STATUS = 'Active'";
                         $supplier_result = $conn->query($supplier_sql);
                         if (!$supplier_result) {
                             echo "Error fetching suppliers: " . $conn->error;

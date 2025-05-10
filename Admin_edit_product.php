@@ -12,10 +12,11 @@ $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $qty = (int)$_POST['qty'];
     $price = (float)$_POST['price'];
+    $description = trim($_POST['description']);
     
-    $update_sql = "UPDATE PRODUCTS SET QTY = ?, PRICE = ? WHERE PK_PRODUCT_ID = ?";
+    $update_sql = "UPDATE PRODUCTS SET QTY = ?, PRICE = ?, DESCRIPTION = ? WHERE PK_PRODUCT_ID = ?";
     $stmt = $conn->prepare($update_sql);
-    $stmt->bind_param("idi", $qty, $price, $product_id);
+    $stmt->bind_param("idsi", $qty, $price, $description, $product_id);
     
     if ($stmt->execute()) {
         echo json_encode(['success' => true]);
@@ -55,7 +56,7 @@ if (!$product) {
         }
 
         .edit-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 40px auto;
             background: white;
             padding: 30px;
@@ -76,14 +77,25 @@ if (!$product) {
             display: block;
             margin-bottom: 8px;
             color: #555;
+            font-weight: 500;
         }
 
-        input[type="number"] {
+        input[type="number"],
+        input[type="text"],
+        textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.5;
         }
 
         .buttons {
@@ -123,6 +135,22 @@ if (!$product) {
             color: #f44336;
             margin-bottom: 20px;
         }
+
+        .product-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .product-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .product-info strong {
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -132,10 +160,17 @@ if (!$product) {
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
         
+        <div class="product-info">
+            <p><strong>Product Name:</strong> <?php echo htmlspecialchars($product['PROD_NAME']); ?></p>
+            <p><strong>Category:</strong> <?php echo htmlspecialchars($product['FK1_CATEGORY_ID']); ?></p>
+        </div>
+        
         <form method="POST">
+            <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
+            
             <div class="form-group">
-                <label>Product Name</label>
-                <input type="text" value="<?php echo htmlspecialchars($product['PROD_NAME']); ?>" disabled>
+                <label for="description">Product Description & Specifications</label>
+                <textarea id="description" name="description" required><?php echo htmlspecialchars($product['DESCRIPTION'] ?? ''); ?></textarea>
             </div>
             
             <div class="form-group">

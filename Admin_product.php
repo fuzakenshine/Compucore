@@ -6,8 +6,16 @@ $admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
-$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+$adminResult = $adminQuery->get_result();
+$adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
 
+/*
+$admin_id = $_SESSION['user_id'];
+$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
+$adminQuery->bind_param("i", $admin_id);
+$adminQuery->execute();
+$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+**/
 // Pagination settings
 $items_per_page = 18;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -19,8 +27,13 @@ $count_result = $conn->query($count_sql);
 $total_rows = $count_result->fetch_assoc()['total'];
 $total_pages = ceil($total_rows / $items_per_page);
 
-// Modify the product query to include pagination
-$sql = "SELECT * FROM PRODUCTS LIMIT $items_per_page OFFSET $offset";
+// Update the product query near the top of the file
+$sql = "SELECT *, 
+        CASE WHEN QTY <= 5 THEN true ELSE false END as is_low_stock,
+        CASE WHEN QTY = 0 THEN true ELSE false END as is_no_stock
+        FROM PRODUCTS 
+        ORDER BY is_no_stock DESC, is_low_stock DESC, QTY ASC
+        LIMIT $items_per_page OFFSET $offset";
 $result = $conn->query($sql);
 
 ?>
@@ -349,6 +362,29 @@ $result = $conn->query($sql);
         .modal-btn.secondary:hover {
             background-color: #757575;
         }
+
+        .product-card.low-stock {
+            border: 2px solid #ff4444;
+            position: relative;
+        }
+
+        .low-stock-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1;
+        }
+
+        .qty-warning {
+            color: #ff4444;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -386,11 +422,20 @@ $result = $conn->query($sql);
         <div class="product-grid">
             <?php if ($result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
-                    <div class="product-card">
+                    <div class="product-card <?php echo $row['is_low_stock'] ? 'low-stock' : ''; ?>">
+                        <?php if($row['is_no_stock']): ?>
+                            <div class="low-stock-badge" style="background-color: #888;">
+                                <i class="fas fa-times-circle"></i> No Stock
+                            </div>
+                        <?php elseif($row['is_low_stock']): ?>
+                            <div class="low-stock-badge">
+                                <i class="fas fa-exclamation-triangle"></i> Low Stock
+                            </div>
+                        <?php endif; ?>
                         <img src="uploads/<?php echo htmlspecialchars($row['IMAGE']); ?>" alt="<?php echo htmlspecialchars($row['PROD_NAME']); ?>">
                         <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
                         <p>₱<?php echo number_format($row['PRICE'], 2); ?></p>
-                        <p>Qty: <?php echo $row['QTY']; ?></p>
+                        <p class="<?php echo $row['QTY'] <= 5 ? 'qty-warning' : ''; ?>">Qty: <?php echo $row['QTY']; ?></p>
                         <div class="product-actions">
                             <button class="edit-btn" onclick="editProduct(<?php echo $row['PK_PRODUCT_ID']; ?>, '<?php echo htmlspecialchars($row['PROD_NAME']); ?>', <?php echo $row['QTY']; ?>, <?php echo $row['PRICE']; ?>)">
                                 <i class="fas fa-edit"></i> Edit
