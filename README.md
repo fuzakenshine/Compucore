@@ -15,7 +15,7 @@
 
 ## Tech Stack
 
-- **Frontend**: HTML, CSS, JavaScript (with frameworks like Bootstrap for responsive design)
+- **Frontend**: HTML, CSS, JavaScript
 - **Backend**: PHP for server-side logic
 - **Database**: MySQL for data storage
 - **Version Control**: Git for tracking changes and collaboration
