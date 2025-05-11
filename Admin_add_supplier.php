@@ -216,10 +216,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         button:hover {
             background-color: #b71c1c;
         }
+
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-section h3 {
+            color: #d32f2f;
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f5f5f5;
+            font-size: 1.2em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            border-color: #d32f2f;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+        }
+
+        button[type="submit"] {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #b71c1c;
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+<div class="sidebar">
     <div class="admin-profile">
             <h3><?= htmlspecialchars($adminName) ?></h3>
         </div>
@@ -238,7 +288,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <a href="Admin_customers.php">
             <i class="fas fa-users"></i> Customers
         </a>
-        <a href="logout.php" style="margin-top: auto;">
+        <a href="Admin_reports.php">
+            <i class="fas fa-chart-bar"></i> Reports
+        </a>
+        <a href="logout.php">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
@@ -248,6 +301,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <h1>Add Supplier</h1>
         </div>
         <form method="post" enctype="multipart/form-data">
+            <h3 style="color: #d32f2f; margin-bottom: 20px;">Contact Person</h3>
             <div class="form-row">
                 <div class="form-group">
                     <label>First Name: <input type="text" name="fname" required></label>
@@ -264,14 +318,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <label>Phone Number: <input type="text" name="phone" required></label>
                 </div>
             </div>
+
+            <h3 style="color: #d32f2f; margin: 30px 0 20px 0;">Company Details</h3>
             <div class="form-row">
                 <div class="form-group">
                     <label>Company Name: <input type="text" name="company" required></label>
                 </div>
                 <div class="form-group">
-                    <label>Address: <input type="text" name="address" required></label>
+                    <label>Company Address: <input type="text" name="address" required></label>
                 </div>
             </div>
+
+            <h3 style="color: #d32f2f; margin: 30px 0 20px 0;">Profile Photo</h3>
             <div class="form-row">
                 <div class="form-group" style="flex: 1;">
                     <label>Photo:</label>

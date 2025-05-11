@@ -1,12 +1,13 @@
 <?php
+session_start();
 include 'db_connect.php';
 
-// Fetch admin name
 $admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
-$adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
+$adminResult = $adminQuery->get_result();
+$adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
 
 // Get report type from URL parameter
 $reportType = isset($_GET['type']) ? $_GET['type'] : 'summary';
@@ -14,14 +15,9 @@ $reportType = isset($_GET['type']) ? $_GET['type'] : 'summary';
 // Fetch data based on report type
 switch($reportType) {
     case 'detailed':
-        // Detailed Orders Report
-        $detailedQuery = $conn->query("
-            SELECT o.*, c.F_NAME, c.L_NAME, c.EMAIL, c.PHONE_NUM
-            FROM orders o
-            JOIN customer c ON o.FK1_CUSTOMER_ID = c.PK_CUSTOMER_ID
-            ORDER BY o.ORDER_DATE DESC
-        ");
-        $detailedData = $detailedQuery->fetch_all(MYSQLI_ASSOC);
+        // Redirect to Detail_reports.php
+        header('Location: Detail_reports.php');
+        exit;
         break;
 
     case 'summary':
@@ -241,40 +237,12 @@ switch($reportType) {
         
         <div class="report-type-selector">
             <a href="?type=summary" class="<?= $reportType === 'summary' ? 'active' : '' ?>">Summary Report</a>
-            <a href="?type=detailed" class="<?= $reportType === 'detailed' ? 'active' : '' ?>">Detailed Report</a>
+            <a href="Detail_reports.php" class="<?= $reportType === 'detailed' ? 'active' : '' ?>">Detailed Report</a>
             <a href="?type=statistical" class="<?= $reportType === 'statistical' ? 'active' : '' ?>">Statistical Report</a>
         </div>
 
         <div class="report-container">
-            <?php if ($reportType === 'detailed'): ?>
-                <h2>Detailed Orders Report</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Order Date</th>
-                            <th>Total Price</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($detailedData as $order): ?>
-                            <tr>
-                                <td><?= $order['PK_ORDER_ID'] ?></td>
-                                <td><?= htmlspecialchars($order['F_NAME'] . ' ' . $order['L_NAME']) ?></td>
-                                <td><?= htmlspecialchars($order['EMAIL']) ?></td>
-                                <td><?= htmlspecialchars($order['PHONE_NUM']) ?></td>
-                                <td><?= $order['ORDER_DATE'] ?></td>
-                                <td>$<?= number_format($order['TOTAL_PRICE'], 2) ?></td>
-                                <td><?= $order['STATUS'] ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php elseif ($reportType === 'summary'): ?>
+            <?php if ($reportType === 'summary'): ?>
                 <h2>Summary Report</h2>
                 <div class="summary-cards">
                     <div class="summary-card">

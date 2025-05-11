@@ -1,30 +1,52 @@
 <?php
-session_start();
-include 'db_connect.php';
+require_once 'db_connect.php';
 
-if (!isset($_SESSION['user_id'])) {
-    die(json_encode(['error' => 'Unauthorized']));
+// Check if ID is provided
+if (!isset($_GET['id'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Customer ID is required'
+    ]);
+    exit;
 }
 
-if (isset($_GET['id'])) {
-    $customer_id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
-    
-    $stmt = $conn->prepare("SELECT PK_CUSTOMER_ID, F_NAME, L_NAME, EMAIL, PHONE_NUM, 
-                           CUSTOMER_ADDRESS, PROFILE_PIC 
-                           FROM customer WHERE PK_CUSTOMER_ID = ?");
-    $stmt->bind_param("i", $customer_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($customer = $result->fetch_assoc()) {
-        // Add default avatar if no profile picture
-        if (empty($customer['PROFILE_PIC'])) {
-            $customer['PROFILE_PIC'] = 'default-avatar.png';
-        }
-        echo json_encode($customer);
-    } else {
-        echo json_encode(['error' => 'Customer not found']);
+$customer_id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
+
+try {
+    // Prepare and execute query
+    $stmt = $conn->prepare("SELECT * FROM customer WHERE PK_CUSTOMER_ID = ?");
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
     }
-} else {
-    echo json_encode(['error' => 'No ID provided']);
+
+    $stmt->bind_param("i", $customer_id);
+    
+    if (!$stmt->execute()) {
+        throw new Exception("Execute failed: " . $stmt->error);
+    }
+
+    $result = $stmt->get_result();
+    $customer = $result->fetch_assoc();
+
+    if ($customer) {
+        echo json_encode([
+            'success' => true,
+            'data' => $customer
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Customer not found'
+        ]);
+    }
+} catch (Exception $e) {
+    error_log("Error in get_customer.php: " . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error fetching customer data: ' . $e->getMessage()
+    ]);
 }
+
+$stmt->close();
+$conn->close();
+?>

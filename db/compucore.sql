@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 10, 2025 at 10:18 AM
+-- Generation Time: May 11, 2025 at 06:30 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,14 +43,9 @@ CREATE DEFINER=`` PROCEDURE `populateCATEGORIES` (IN `action` VARCHAR(10), IN `p
     END IF;
 END$$
 
-CREATE DEFINER=`` PROCEDURE `populateCUSTOMER` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_fname` VARCHAR(100), IN `p_lname` VARCHAR(100), IN `p_email` VARCHAR(100))   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO customer (C_FNAME, C_LNAME, EMAIL) VALUES (p_fname, p_lname, p_email);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM customer WHERE PK_CUSTOMER_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE customer SET C_FNAME = p_fname, C_LNAME = p_lname, EMAIL = p_email WHERE PK_CUSTOMER_ID = p_id;
-    END IF;
+CREATE DEFINER=`` PROCEDURE `populateCustomers` (IN `p_fname` VARCHAR(100), IN `p_lname` VARCHAR(100), IN `p_email` VARCHAR(255), IN `p_password_hash` VARCHAR(255), IN `p_address` VARCHAR(255), IN `p_phone_num` VARCHAR(15))   BEGIN
+    INSERT INTO customer (F_NAME, L_NAME, EMAIL, PASSWORD_HASH, CUSTOMER_ADDRESS, PHONE_NUM, UPDATE_AT)
+    VALUES (p_fname, p_lname, p_email, p_password_hash, p_address, p_phone_num, NOW());
 END$$
 
 CREATE DEFINER=`` PROCEDURE `populateORDERDETAILS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_order_id` INT, IN `p_product_id` INT, IN `p_quantity` INT)   BEGIN
@@ -83,13 +78,30 @@ CREATE DEFINER=`` PROCEDURE `populatePAYMENTS` (IN `action` VARCHAR(10), IN `p_i
     END IF;
 END$$
 
-CREATE DEFINER=`` PROCEDURE `populatePRODUCTS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_name` VARCHAR(100), IN `p_supplier_id` INT, IN `p_price` DECIMAL(10,2))   BEGIN
+CREATE DEFINER=`` PROCEDURE `populatePRODUCTS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_category_id` INT, IN `p_supplier_id` INT, IN `p_name` VARCHAR(255), IN `p_desc` VARCHAR(255), IN `p_specs` TEXT, IN `p_price` DECIMAL(10,2), IN `p_qty` INT, IN `p_image` VARCHAR(255))   BEGIN
     IF action = 'CREATE' THEN
-        INSERT INTO products (PRODUCT_NAME, SUPPLIER_ID, PRICE) VALUES (p_name, p_supplier_id, p_price);
+        INSERT INTO PRODUCTS (
+            FK1_CATEGORY_ID, FK2_SUPPLIER_ID, PROD_NAME, PROD_DESC, PROD_SPECS, PRICE, QTY, IMAGE, UPDATED_AT
+        ) VALUES (
+            p_category_id, p_supplier_id, p_name, p_desc, p_specs, p_price, p_qty, p_image, NOW()
+        );
     ELSEIF action = 'READ' THEN
-        SELECT * FROM products WHERE PK_PRODUCT_ID = p_id;
+        SELECT * FROM PRODUCTS WHERE PK_PRODUCT_ID = p_id;
     ELSEIF action = 'UPDATE' THEN
-        UPDATE products SET PRODUCT_NAME = p_name, SUPPLIER_ID = p_supplier_id, PRICE = p_price WHERE PK_PRODUCT_ID = p_id;
+        UPDATE PRODUCTS
+        SET
+            FK1_CATEGORY_ID = p_category_id,
+            FK2_SUPPLIER_ID = p_supplier_id,
+            PROD_NAME = p_name,
+            PROD_DESC = p_desc,
+            PROD_SPECS = p_specs,
+            PRICE = p_price,
+            QTY = p_qty,
+            IMAGE = p_image,
+            UPDATED_AT = NOW()
+        WHERE PK_PRODUCT_ID = p_id;
+    ELSEIF action = 'DELETE' THEN
+        DELETE FROM PRODUCTS WHERE PK_PRODUCT_ID = p_id;
     END IF;
 END$$
 
@@ -262,7 +274,9 @@ INSERT INTO `customer` (`PK_CUSTOMER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD
 (8, 'two', 'test', 'testtwo@gmail.com', '$2y$10$a2hVhxOLZ1.Eh8xyFGejsOPwzx6LLq.vzsA2wWx.iEazrrJVbGTKq', 'Villa remedios, Oppra kalunasan', '+123232323', '2025-05-04 02:27:46', '2025-05-04 02:27:46', 'default.png'),
 (9, 'three', 'test', 'testthree@gmail.com', '$2y$10$aW3lIzQk0UoWmSX50aYdXORg7A3JzUAAhapKoaHh6gGh3c3nXhtAC', 'Villa remedios, Oppra kalunasan', '+639991029087', '2025-05-04 02:28:45', '2025-05-04 02:28:45', 'default.png'),
 (10, 'DOE', 'JAN', 'jando@gmail.com', '$2y$10$Jrpa1KsAYQx2DKRI34CqE.5CRsWcB00uJl1sarKse.8.0L3ewAi8u', 'San Isidro', '+12345678990088', '2025-05-06 18:44:05', '2025-05-06 18:44:05', 'default.png'),
-(24, 'four', 'Testg', 'testfour@gmail.com', '$2y$10$WXNxlFC.NJgVnzOHkn/PmuYc52eKuMV1/Gq7JHYZsK99dbWAJNtRW', 'Oprra Kalunasan', '+63123466879', '2025-05-09 17:07:42', '2025-05-10 00:52:38', 'default.png');
+(24, 'four', 'Testg', 'testfour@gmail.com', '$2y$10$WXNxlFC.NJgVnzOHkn/PmuYc52eKuMV1/Gq7JHYZsK99dbWAJNtRW', 'Oprra Kalunasan', '+63123466879', '2025-05-09 17:07:42', '2025-05-10 00:52:38', 'default.png'),
+(25, 'Bustillo', 'Jarom', 'jarom@gmail.com', '$2y$10$.R5OMJFfNxbQb2.QaEkDS.eHd9Fl9pHXv29ILyiP2dE.UIhgjJtMW', 'California', '+6309123456789', '2025-05-10 16:55:09', '2025-05-10 16:55:09', 'default.png'),
+(26, 'Lahaylahay', 'Bevs', 'b@gmail.com', '$2y$10$7ENpABtkXCBp/CcwEnHWEOqbZm5wOJtYSJnZ7G6I4q4qHD3ODuJb.', 'CEBU', '+639234560987', '2025-05-10 17:21:07', '2025-05-10 17:21:07', 'default.png');
 
 -- --------------------------------------------------------
 
@@ -380,7 +394,17 @@ INSERT INTO `notifications` (`PK_NOTIFICATION_ID`, `FK_CUSTOMER_ID`, `MESSAGE`, 
 (97, 24, 'Your order #42 has been placed and is awaiting approval.', 'order', 'read', '2025-05-10 14:16:32'),
 (98, 24, 'Your order for A4TECH BLACK MOUSE, AMD White Graphic Card 2080, T-FORCE Delta 16gb RAM has been placed and is awaiting approval.', 'order', 'read', '2025-05-10 14:16:32'),
 (99, 24, 'Your order for A4TECH BLACK MOUSE, AMD White Graphic Card 2080, T-FORCE Delta 16gb RAM has been approved and is being processed.', 'order', 'read', '2025-05-10 14:16:36'),
-(100, 24, 'Your order for A4TECH BLACK MOUSE, AMD White Graphic Card 2080, T-FORCE Delta 16gb RAM has been approved and is being processed.', 'order', 'read', '2025-05-10 14:16:36');
+(100, 24, 'Your order for A4TECH BLACK MOUSE, AMD White Graphic Card 2080, T-FORCE Delta 16gb RAM has been approved and is being processed.', 'order', 'read', '2025-05-10 14:16:36'),
+(101, 25, 'Your order #43 has been placed and is awaiting approval.', 'order', 'read', '2025-05-10 16:56:58'),
+(102, 25, 'Your order for Asus monitor has been placed and is awaiting approval.', 'order', 'read', '2025-05-10 16:56:58'),
+(103, 25, 'Your order for Asus monitor has been rejected. Please check the details.', 'order', 'read', '2025-05-10 16:58:16'),
+(104, 25, 'Your order #43 has been rejected.', 'order', 'read', '2025-05-10 16:58:16'),
+(105, 25, 'Your order for Gaming Pc has been placed and is awaiting approval.', 'order', 'unread', '2025-05-10 17:04:36'),
+(106, 25, 'Your order for Gaming Pc has been approved and is being processed.', 'order', 'unread', '2025-05-10 17:05:13'),
+(107, 26, 'Your order for AN Keyboard MC Blue switch, ELFKS DROID CASING has been placed and is awaiting approval.', 'order', 'unread', '2025-05-10 17:25:54'),
+(108, 26, 'Your order for AN Keyboard MC Blue switch, ELFKS DROID CASING has been approved and is being processed.', 'order', 'read', '2025-05-10 17:26:26'),
+(109, 25, 'Your order for Asus monitor, The Great Wave of Kanagawa Mousepad has been placed and is awaiting approval.', 'order', 'unread', '2025-05-10 17:32:52'),
+(110, 25, 'Your order for Asus monitor, The Great Wave of Kanagawa Mousepad has been approved and is being processed.', 'order', 'unread', '2025-05-10 17:33:02');
 
 -- --------------------------------------------------------
 
@@ -439,56 +463,11 @@ INSERT INTO `orders` (`PK_ORDER_ID`, `FK1_CUSTOMER_ID`, `FK2_PAYMENT_ID`, `FK3_U
 (39, 24, 0, 0, 25000.00, '2025-05-10 11:14:09', 0.00, '2025-05-10 11:14:21', 'Approved'),
 (40, 24, 0, 0, 30250.00, '2025-05-10 14:11:07', 0.00, '2025-05-10 14:11:26', 'Approved'),
 (41, 24, 0, 0, 3000.00, '2025-05-10 14:16:02', 0.00, '2025-05-10 14:16:06', 'Approved'),
-(42, 24, 0, 0, 29000.00, '2025-05-10 14:16:32', 0.00, '2025-05-10 14:16:36', 'Approved');
-
---
--- Triggers `orders`
---
-DELIMITER $$
-CREATE TRIGGER `ORDER_NOTIFICATION_AFTER_INSERT` AFTER INSERT ON `orders` FOR EACH ROW BEGIN
-    INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE, STATUS, CREATED_AT)
-    VALUES (
-        NEW.FK1_CUSTOMER_ID,
-        CONCAT('Your order #', NEW.PK_ORDER_ID, ' has been placed and is awaiting approval.'),
-        'order',
-        'unread',
-        NOW()
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `ORDER_NOTIFICATION_AFTER_UPDATE` AFTER UPDATE ON `orders` FOR EACH ROW BEGIN
-    DECLARE prod_names TEXT;
-
-    -- Concatenate all product names for this order
-    SELECT GROUP_CONCAT(p.PROD_NAME SEPARATOR ', ') INTO prod_names
-    FROM order_detail od
-    JOIN products p ON od.FK1_PRODUCT_ID = p.PK_PRODUCT_ID
-    WHERE od.FK2_ORDER_ID = NEW.PK_ORDER_ID;
-
-    IF NEW.STATUS = 'Approved' AND OLD.STATUS <> 'Approved' THEN
-        INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE, STATUS, CREATED_AT)
-        VALUES (
-            NEW.FK1_CUSTOMER_ID,
-            CONCAT('Your order for ', prod_names, ' has been approved and is being processed.'),
-            'order',
-            'unread',
-            NOW()
-        );
-    ELSEIF NEW.STATUS = 'Rejected' AND OLD.STATUS <> 'Rejected' THEN
-        INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE, STATUS, CREATED_AT)
-        VALUES (
-            NEW.FK1_CUSTOMER_ID,
-            CONCAT('Your order for ', prod_names, ' has been rejected. Please check the details.'),
-            'order',
-            'unread',
-            NOW()
-        );
-    END IF;
-END
-$$
-DELIMITER ;
+(42, 24, 0, 0, 29000.00, '2025-05-10 14:16:32', 0.00, '2025-05-10 14:16:36', 'Approved'),
+(43, 25, 0, 0, 5000.00, '2025-05-10 16:56:58', 0.00, '2025-05-10 16:58:16', 'Rejected'),
+(44, 25, 0, 0, 200000.00, '2025-05-10 17:04:36', 0.00, '2025-05-10 17:05:13', 'Approved'),
+(45, 26, 0, 0, 12250.00, '2025-05-10 17:25:54', 0.00, '2025-05-10 17:26:26', 'Approved'),
+(46, 25, 0, 0, 6000.00, '2025-05-10 17:32:52', 0.00, '2025-05-10 17:33:02', 'Approved');
 
 -- --------------------------------------------------------
 
@@ -548,7 +527,13 @@ INSERT INTO `order_detail` (`PK_ORDER_DETAIL_ID`, `FK1_PRODUCT_ID`, `FK2_ORDER_I
 (36, 37, 41, 1, 3000.00, '2025-05-10 14:16:02'),
 (37, 38, 42, 1, 1000.00, '2025-05-10 14:16:32'),
 (38, 31, 42, 1, 25000.00, '2025-05-10 14:16:32'),
-(39, 26, 42, 1, 3000.00, '2025-05-10 14:16:32');
+(39, 26, 42, 1, 3000.00, '2025-05-10 14:16:32'),
+(40, 41, 43, 1, 5000.00, '2025-05-10 16:56:58'),
+(41, 44, 44, 10, 20000.00, '2025-05-10 17:04:36'),
+(42, 32, 45, 1, 2000.00, '2025-05-10 17:25:54'),
+(43, 22, 45, 1, 10000.00, '2025-05-10 17:25:54'),
+(44, 41, 46, 1, 5000.00, '2025-05-10 17:32:52'),
+(45, 33, 46, 1, 1000.00, '2025-05-10 17:32:52');
 
 --
 -- Triggers `order_detail`
@@ -610,7 +595,7 @@ CREATE TABLE `products` (
 INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `PROD_NAME`, `PROD_DESC`, `PROD_SPECS`, `PRICE`, `QTY`, `IMAGE`, `CREATED_AT`, `UPDATED_AT`) VALUES
 (20, 2, 1, 'RTX 3080 ', 'Best for gaming ', '-White\r\n-Cool fan', 3500.00, 11, 'white graphic card.jpg', '2025-04-26 02:26:00', '2025-04-26 02:26:00'),
 (21, 2, 1, 'RTX 3080 BLACK', 'Best For gaming', '-Black\r\n-cool fan', 30000.00, 10, 'Video game graphics are a ticking time bomb — the industry needs to focus on art over tech.jpg', '2025-04-26 02:34:07', '2025-04-26 02:34:07'),
-(22, 8, 2, 'ELFKS DROID CASING', '-The best cased by elon musk', '-White - Blue combi\r\n-Hard Case', 10000.00, 19, 'Transform your product into a captivating visual experience with 3D product animation!.jpg', '2025-04-26 02:35:46', '2025-04-26 02:35:46'),
+(22, 8, 2, 'ELFKS DROID CASING', '-The best cased by elon musk', '-White - Blue combi\r\n-Hard Case', 10000.00, 18, 'Transform your product into a captivating visual experience with 3D product animation!.jpg', '2025-04-26 02:35:46', '2025-04-26 02:35:46'),
 (23, 5, 3, 'HyperX RAM 16GB', 'Best for Coding', '-DDRM5\r\n-16GB\r\n', 3000.00, 20, 'The best RAM of 2024_ top memory for your PC.jpg', '2025-04-26 02:36:31', '2025-04-26 02:36:31'),
 (24, 19, 4, 'Corsair coolant fan', 'For your cpu ', '-1000mah Fan', 800.00, 20, 'SST-AR04.jpg', '2025-04-26 02:37:25', '2025-04-26 02:37:25'),
 (25, 3, 1, 'ROG Strix Z490-E GAMING MOTHERBOARD', 'Best for gaming, coding and editing', '-BLACK\r\n-PURPLE\r\n', 5000.00, 19, 'ROG STRIX Z490-E GAMING _ Motherboards _ ROG Global.jpg', '2025-04-26 02:40:24', '2025-04-26 02:40:24'),
@@ -620,17 +605,17 @@ INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `
 (29, 1, 1, 'UN Monitor 240hz', 'Best for HD Videos', '-240hz\r\n-1ms\r\n-hdr\r\n-24.5\"', 3000.00, 19, 'p3.png', '2025-04-26 02:45:05', '2025-04-26 02:45:05'),
 (30, 19, 2, 'Coolant fans ', 'Good for your eyes', '-RGB', 2000.00, 20, 'p2.png', '2025-04-26 02:45:37', '2025-04-26 02:45:37'),
 (31, 2, 3, 'AMD White Graphic Card 2080', 'Better experience for gaming', '-white\r\n-cold', 25000.00, 19, 'p1.png', '2025-04-26 02:46:32', '2025-04-26 02:46:32'),
-(32, 13, 3, 'AN Keyboard MC Blue switch', 'Good for typing and gaming', '-Blue switch\r\n-smooth typing\r\n', 2000.00, 19, 'gaming keyboard.jpg', '2025-04-26 02:47:43', '2025-04-26 02:47:43'),
-(33, 26, 4, 'The Great Wave of Kanagawa Mousepad', 'Smooth ', '-White, blue lights', 1000.00, 20, 'Flowy Waves Desk Mat, XXL Gaming Mouse Pad, Blue Water Mousepad, Beautiful Nature Desk Mat.jpg', '2025-04-26 02:51:39', '2025-04-26 02:51:39'),
+(32, 13, 3, 'AN Keyboard MC Blue switch', 'Good for typing and gaming', '-Blue switch\r\n-smooth typing\r\n', 2000.00, 18, 'gaming keyboard.jpg', '2025-04-26 02:47:43', '2025-04-26 02:47:43'),
+(33, 26, 4, 'The Great Wave of Kanagawa Mousepad', 'Smooth ', '-White, blue lights', 1000.00, 19, 'Flowy Waves Desk Mat, XXL Gaming Mouse Pad, Blue Water Mousepad, Beautiful Nature Desk Mat.jpg', '2025-04-26 02:51:39', '2025-04-26 02:51:39'),
 (34, 26, 1, 'Black Mousepad ', 'Smooth for mouse and gaming', '-black', 1000.00, 9, 'DIGSOM Mouse Pad.jpg', '2025-04-26 02:52:11', '2025-05-04 03:10:23'),
 (35, 2, 1, 'GEFORCE GTX ', 'Good for gaming', '-32gb RAM', 25000.00, 19, 'db839bf5-d42b-4a59-b48d-6f8f5f3c31fc.jpg', '2025-04-26 02:53:39', '2025-04-26 02:53:39'),
 (36, 8, 3, 'RGB Hard Glass Case', 'See through', '-Glass', 2000.00, 0, 'Custom build Gaming PC.jpg', '2025-04-26 02:54:53', '2025-04-26 02:54:53'),
 (37, 19, 1, 'Corsair coolant fan', 'Cold and Cool', '-White\r\n', 3000.00, 8, 'Corsair Dominator Platinum RGB Series.jpg', '2025-04-26 02:55:30', '2025-05-04 03:10:02'),
 (38, 14, 3, 'A4TECH BLACK MOUSE', 'Good for Valorant', '-black', 1000.00, 11, 'Amazon_com_ Dapesuom Small Mouse Pad 6 x 8 Inch….jpg', '2025-04-26 02:56:30', '2025-05-09 18:13:36'),
 (39, 26, 4, 'MSI Router', 'Good for any WIFI', '-FAST ', 3000.00, 5, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-26 02:57:19', '2025-05-04 02:55:09'),
-(41, 1, 2, 'Asus monitor', 'monitorr', '-black\r\n-red', 5000.00, 20, 'ebb4e37b-74b6-41b8-9719-7b565bec97f5.jpg', '2025-05-10 16:07:21', '2025-05-10 16:07:21'),
+(41, 1, 2, 'Asus monitor', 'monitorr', '-black\r\n-red', 5000.00, 19, 'ebb4e37b-74b6-41b8-9719-7b565bec97f5.jpg', '2025-05-10 16:07:21', '2025-05-10 16:07:21'),
 (42, 3, 3, 'T-FORCE VULCANZ', 'gaming', 'gaming\r\nblack\r\npaste', 3000.00, 10, '62f7d253-ba88-434e-9ec8-f2d581fb5316.jpg', '2025-05-10 16:10:07', '2025-05-10 16:10:07'),
-(43, 3, 3, 'T-FORCE VULCANZ', 'gaming', 'gaming\r\nblack\r\npaste', 3000.00, 10, '62f7d253-ba88-434e-9ec8-f2d581fb5316.jpg', '2025-05-10 16:10:22', '2025-05-10 16:10:22');
+(44, 21, 2, 'Gaming Pc', 'sadsadsaddsada', 'sdsadsadsaa', 20000.00, 0, 'Der Actina Gaming-PC 5901443414643 ist eine….jpg', '2025-05-10 16:43:46', '2025-05-10 16:43:46');
 
 -- --------------------------------------------------------
 
@@ -661,7 +646,8 @@ INSERT INTO `reviews` (`PK_REVIEW_ID`, `FK1_CUSTOMER_ID`, `FK2_PRODUCT_ID`, `FK3
 (7, 8, 35, 0, 5, 'Nice good for gaming ', '2025-05-04 02:36:44', NULL),
 (8, 24, 38, 0, 5, 'jarom dancer mo kalit lng redflag', '2025-05-09 18:26:58', NULL),
 (9, 24, 27, 0, 5, 'Good for gaming i love it', '2025-05-10 03:28:55', '1746818935_1746266457_0_71oSydXEo4S.jpg'),
-(10, 24, 28, 0, 4, 'Good for online class not for gaming', '2025-05-10 03:36:13', '1746819373_681e592db02f8_hero.jpg,1746819373_681e592db050a_hero1.jpg,1746819373_681e592db0628_IG.png');
+(10, 24, 28, 0, 4, 'Good for online class not for gaming', '2025-05-10 03:36:13', '1746819373_681e592db02f8_hero.jpg,1746819373_681e592db050a_hero1.jpg,1746819373_681e592db0628_IG.png'),
+(11, 26, 32, 0, 2, 'Disposable ni nga keyboard, baratohon murag insik', '2025-05-10 17:28:53', '1746869333_681f1c555f2b8_351453175_1191126874899419_117306819684368067_n.jpg');
 
 -- --------------------------------------------------------
 
@@ -692,7 +678,8 @@ INSERT INTO `supplier` (`PK_SUPPLIER_ID`, `FK_USER_ID`, `S_LNAME`, `S_FNAME`, `P
 (1, 0, 'Patinyo', 'Rafael', '+123567890', 'Bakal TT Corp', 'Cthulu@gmail', 'Avocado St. Mambaling', '351453175_1191126874899419_117306819684368067_n.jpg', '2025-04-26 02:18:45', '2025-05-03 17:22:47', 'Inactive'),
 (2, 0, 'Caumeran', 'Damien', '+987644123', 'Cow Me Run ', 'damskie@gmail.com', 'V.rama', 'ASDASDSDASA.jpg', '2025-04-26 02:22:20', '2025-04-26 02:22:20', 'Active'),
 (3, 0, 'Dagupols', 'Client', '+56892134', 'Try me hack', 'Client@gmai.com', 'Buhisan', '6815bc100aa9e.jpg', '2025-04-26 02:23:42', '2025-04-26 02:23:42', 'Active'),
-(4, 0, 'Ancero', 'John Rey', '+565723257', 'JAHH Corp.', 'gwapokoancero123@gmail.com', 'B.rod', '6815bc070d4c6.jpg', '2025-04-26 02:25:00', '2025-04-26 02:25:00', 'Active');
+(4, 0, 'Ancero', 'John Rey', '+565723257', 'JAHH Corp.', 'gwapokoancero123@gmail.com', 'B.rod', '6815bc070d4c6.jpg', '2025-04-26 02:25:00', '2025-04-26 02:25:00', 'Active'),
+(6, 1, 'Lahaylahay', 'Bevs', '092445678009', 'COMPUSPEC', 'bevs@1.com', 'CEBU', '467743265_2034794076942966_7629118095982581341_n.jpg', '2025-05-10 17:17:20', '2025-05-10 17:17:20', 'Active');
 
 -- --------------------------------------------------------
 
@@ -828,49 +815,49 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
+  MODIFY `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `order_detail`
 --
 ALTER TABLE `order_detail`
-  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `PK_REVIEW_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `PK_REVIEW_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `supplier`
 --
 ALTER TABLE `supplier`
-  MODIFY `PK_SUPPLIER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `PK_SUPPLIER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables

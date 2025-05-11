@@ -21,33 +21,42 @@ $adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prod_name = $_POST['prod_name'];
     $prod_desc = $_POST['prod_desc'];
-    $prod_spec = $_POST['prod_spec']; // Add this line
+    $prod_spec = $_POST['prod_spec'];
     $price = $_POST['price'];
     $qty = $_POST['qty'];
     $category_id = $_POST['category_id'];
     $supplier_id = $_POST['supplier_id'];
 
-    // Handle file upload
-    $image = $_FILES['image']['name'];
-    $target_dir = "uploads/";
-    $target_file = $target_dir . basename($image);
-
-    if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-        // Use stored procedure to insert product
-        $stmt = $conn->prepare("CALL populatePRODUCTS('CREATE', 0, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param(
-            "iisssdis",
-            $category_id, $supplier_id, $prod_name, $prod_desc, $prod_spec, $price, $qty, $image
-        );
-
-        if ($stmt->execute()) {
-            echo "<script>alert('Product added successfully!'); window.location.href='Admin_product.php';</script>";
-        } else {
-            echo "Error: " . $stmt->error;
-        }
-        $stmt->close();
+    // Server-side validation for negative or zero values
+    if ($price <= 0 || $qty <= 0) {
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+        echo "<script>Swal.fire({icon: 'error', title: 'Invalid Input', text: 'Price and Quantity must be greater than zero!'});</script>";
     } else {
-        echo "<script>alert('Failed to upload image.');</script>";
+        // Handle file upload
+        $image = $_FILES['image']['name'];
+        $target_dir = "uploads/";
+        $target_file = $target_dir . basename($image);
+
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+            // Use stored procedure to insert product
+            $stmt = $conn->prepare("CALL populatePRODUCTS('CREATE', 0, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "iisssdis",
+                $category_id, $supplier_id, $prod_name, $prod_desc, $prod_spec, $price, $qty, $image
+            );
+
+            if ($stmt->execute()) {
+                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                echo "<script>Swal.fire({icon: 'success', title: 'Success', text: 'Product added successfully!', timer: 2000, showConfirmButton: false}).then(()=>{window.location.href='Admin_product.php';});</script>";
+            } else {
+                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                echo "<script>Swal.fire({icon: 'error', title: 'Error', text: 'Error: " . $stmt->error . "'});</script>";
+            }
+            $stmt->close();
+        } else {
+            echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+            echo "<script>Swal.fire({icon: 'error', title: 'Upload Failed', text: 'Failed to upload image.'});</script>";
+        }
     }
 }
 
@@ -60,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function previewImage(event) {
             const reader = new FileReader();
@@ -70,6 +80,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 document.getElementById('placeholderText').style.display = 'none';
             }
             reader.readAsDataURL(event.target.files[0]);
+        }
+
+        // Client-side validation
+        function validateForm() {
+            const price = parseFloat(document.querySelector('input[name="price"]').value);
+            const qty = parseInt(document.querySelector('input[name="qty"]').value);
+            if (isNaN(price) || price <= 0) {
+                Swal.fire({icon: 'error', title: 'Invalid Input', text: 'Price must be greater than zero!'});
+                return false;
+            }
+            if (isNaN(qty) || qty <= 0) {
+                Swal.fire({icon: 'error', title: 'Invalid Input', text: 'Quantity must be greater than zero!'});
+                return false;
+            }
+            return true;
         }
     </script>
     <style>
@@ -277,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="header">
             <h1>Add Product</h1>
         </div>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
             <div class="form-container">
                 <div class="left">
                 <label class="image-upload">

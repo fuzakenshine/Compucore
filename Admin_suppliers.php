@@ -1,25 +1,110 @@
 <?php
+session_start();
 include 'db_connect.php';
 
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
 
+$admin_id = $_SESSION['user_id'];
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
 $adminQuery->bind_param("i", $admin_id);
 $adminQuery->execute();
 $adminResult = $adminQuery->get_result();
 $adminName = $adminResult->num_rows > 0 ? $adminResult->fetch_assoc()['full_name'] : 'Test Admin';
 
-/*
-// Set a default admin ID for testing
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['user_id'] = 1; // Default admin ID
+// Handle POST request for editing supplier
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit') {
+    try {
+        $supplier_id = filter_var($_POST['supplier_id'], FILTER_SANITIZE_NUMBER_INT);
+        $fname = htmlspecialchars(trim($_POST['fname']), ENT_QUOTES, 'UTF-8');
+        $lname = htmlspecialchars(trim($_POST['lname']), ENT_QUOTES, 'UTF-8');
+        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+        $company = htmlspecialchars(trim($_POST['company']), ENT_QUOTES, 'UTF-8');
+        $phone = htmlspecialchars(trim($_POST['phone']), ENT_QUOTES, 'UTF-8');
+        $address = htmlspecialchars(trim($_POST['address']), ENT_QUOTES, 'UTF-8');
+
+        // Start transaction
+        $conn->begin_transaction();
+
+        // Update basic info
+        $update_stmt = $conn->prepare("UPDATE supplier SET 
+            S_FNAME = ?, 
+            S_LNAME = ?, 
+            EMAIL = ?, 
+            COMPANY_NAME = ?,
+            PHONE_NUM = ?,
+            SUPPLIER_ADDRESS = ?,
+            UPDATE_AT = CURRENT_TIMESTAMP 
+            WHERE PK_SUPPLIER_ID = ?");
+            
+        if (!$update_stmt) {
+            throw new Exception("Prepare update failed: " . $conn->error);
+        }
+
+        $update_stmt->bind_param("ssssssi", 
+            $fname, 
+            $lname, 
+            $email, 
+            $company,
+            $phone,
+            $address,
+            $supplier_id
+        );
+        
+        if (!$update_stmt->execute()) {
+            throw new Exception("Execute update failed: " . $update_stmt->error);
+        }
+
+        // Handle image upload if present
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+            $allowed = ['jpg', 'jpeg', 'png'];
+            $filename = $_FILES['image']['name'];
+            $filetype = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            if (in_array($filetype, $allowed)) {
+                $newname = 'supplier_' . uniqid() . '.' . $filetype;
+                $upload_path = 'uploads/' . $newname;
+
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
+                    // Get old image filename
+                    $img_stmt = $conn->prepare("SELECT SUPPLIER_IMAGE FROM supplier WHERE PK_SUPPLIER_ID = ?");
+                    $img_stmt->bind_param("i", $supplier_id);
+                    $img_stmt->execute();
+                    $old_image = $img_stmt->get_result()->fetch_assoc()['SUPPLIER_IMAGE'];
+
+                    // Update database with new image
+                    $img_update = $conn->prepare("UPDATE supplier SET SUPPLIER_IMAGE = ? WHERE PK_SUPPLIER_ID = ?");
+                    $img_update->bind_param("si", $newname, $supplier_id);
+                    $img_update->execute();
+
+                    // Delete old image if exists
+                    if ($old_image && file_exists('uploads/' . $old_image)) {
+                        unlink('uploads/' . $old_image);
+                    }
+                }
+            }
+        }
+
+        // Commit transaction
+        $conn->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Supplier updated successfully'
+        ]);
+        exit;
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("Error in supplier update: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+        exit;
+    }
 }
-// Fetch admin name
-$admin_id = $_SESSION['user_id'];
-$adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
-$adminQuery->bind_param("i", $admin_id);
-$adminQuery->execute();
-$result = $adminQuery->get_result();
-$adminName = $result->num_rows > 0 ? $result->fetch_assoc()['full_name'] : 'Admin User';*/
 
 // Supplier query
 $sql = "SELECT PK_SUPPLIER_ID, S_FNAME, S_LNAME, EMAIL, CREATE_AT, COMPANY_NAME, 
@@ -36,6 +121,7 @@ $result = $conn->query($sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Suppliers</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             margin: 0;
@@ -489,7 +575,7 @@ $result = $conn->query($sql);
                     <td><?= date("m/d/Y", strtotime($row['CREATE_AT'])) ?></td>
                     <td><?= htmlspecialchars($row['COMPANY_NAME']) ?></td>
                     <td>
-                        <a href="javascript:void(0)" class="action-btn edit" onclick='openEditModal(<?= json_encode($row) ?>)'>
+                        <a href="javascript:void(0)" class="action-btn edit" onclick="openEditModal(<?= $row['PK_SUPPLIER_ID'] ?>)">
                             <i class="fas fa-edit"></i>
                         </a>
                         <a href="javascript:void(0)" class="action-btn delete" onclick="deleteSupplier(<?= $row['PK_SUPPLIER_ID'] ?>)">
@@ -548,8 +634,13 @@ $result = $conn->query($sql);
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="edit_image"><i class="fas fa-image"></i> Supplier Image</label>
-                        <input type="file" id="edit_image" name="image" accept="image/*">
+                        <label for="edit_phone"><i class="fas fa-phone"></i> Phone</label>
+                        <input type="text" id="edit_phone" name="phone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_address"><i class="fas fa-map-marker-alt"></i> Address</label>
+                        <input type="text" id="edit_address" name="address" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -565,124 +656,21 @@ $result = $conn->query($sql);
     </div>
 
     <script>
-    // Modal functionality
-    const modal = document.getElementById('editModal');
-    const closeBtn = document.getElementsByClassName('close')[0];
-
-    function openEditModal(supplier) {
-        try {
-            // Parse the supplier data if it's a string
-            if (typeof supplier === 'string') {
-                supplier = JSON.parse(supplier);
-            }
-            
-            // Fetch the latest supplier data from the server
-            fetch(`get_supplier.php?id=${supplier.PK_SUPPLIER_ID}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const supplierData = data.supplier;
-                        
-                        // Update form fields with the fetched data
-                        document.getElementById('edit_supplier_id').value = supplierData.PK_SUPPLIER_ID;
-                        document.getElementById('supplier_number').textContent = supplierData.PK_SUPPLIER_ID;
-                        document.getElementById('edit_fname').value = supplierData.S_FNAME;
-                        document.getElementById('edit_lname').value = supplierData.S_LNAME;
-                        document.getElementById('edit_email').value = supplierData.EMAIL;
-                        document.getElementById('edit_company').value = supplierData.COMPANY_NAME;
-                        
-                        // Update profile preview
-                        const profilePreview = document.getElementById('profile_preview');
-                        if (supplierData.SUPPLIER_IMAGE) {
-                            profilePreview.src = `uploads/${supplierData.SUPPLIER_IMAGE}`;
-                        } else {
-                            profilePreview.src = 'assets/default-profile.png';
-                        }
-                        
-                        // Show the modal
-                        modal.style.display = 'block';
-                    } else {
-                        alert('Error fetching supplier data: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error fetching supplier data');
-                });
-        } catch (error) {
-            console.error('Error opening modal:', error);
-            alert('Error opening edit form');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize form submission handler
+        const editForm = document.getElementById('editForm');
+        if (editForm) {
+            editForm.addEventListener('submit', handleFormSubmit);
         }
-    }
 
-    function closeEditModal() {
-        modal.style.display = 'none';
-    }
-
-    // Close modal when clicking the X or outside the modal
-    closeBtn.onclick = closeEditModal;
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeEditModal();
+        // Initialize image preview handler
+        const imageInput = document.getElementById('edit_image');
+        if (imageInput) {
+            imageInput.addEventListener('change', handleImagePreview);
         }
-    }
-
-    // Handle form submission
-    document.getElementById('editForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        
-        // Add the file if it exists
-        const fileInput = document.getElementById('edit_image');
-        if (fileInput.files.length > 0) {
-            formData.append('image', fileInput.files[0]);
-        }
-        
-        // Show loading state
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-        submitBtn.disabled = true;
-        
-        // Debug: Log the form data being sent
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
-        }
-        
-        fetch('Admin_edit_supplier.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Server response:', data); // Debug log
-            if (data.success) {
-                alert('Supplier updated successfully!');
-                closeEditModal();
-                // Force reload the page to show updated data
-                window.location.href = window.location.href;
-            } else {
-                alert(data.message || 'Error updating supplier');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error updating supplier: ' + error.message);
-        })
-        .finally(() => {
-            // Reset button state
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
     });
 
-    // Update the file input handler
-    document.getElementById('edit_image').addEventListener('change', function(e) {
+    function handleImagePreview(e) {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -690,31 +678,175 @@ $result = $conn->query($sql);
             };
             reader.readAsDataURL(this.files[0]);
         }
-    });
+    }
 
-    function deleteSupplier(supplierId) {
-        if (confirm('Are you sure you want to delete this supplier?')) {
-            fetch('Admin_delete_supplier.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ supplier_id: supplierId })
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        submitBtn.disabled = true;
+        
+        const formData = new FormData(this);
+        formData.append('action', 'edit');
+        
+        fetch('Admin_suppliers.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    closeEditModal();
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to update supplier'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'An unexpected error occurred'
+            });
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+
+    function openEditModal(supplierId) {
+        console.log('Opening modal for supplier:', supplierId); // Debug log
+        
+        // Show loading state
+        Swal.fire({
+            title: 'Loading...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Fetch supplier data
+        fetch(`get_supplier.php?id=${supplierId}`)
+            .then(response => {
+                console.log('Response status:', response.status); // Debug log
+                return response.json();
             })
-            .then(response => response.json())
             .then(data => {
+                console.log('Received data:', data); // Debug log
+                
                 if (data.success) {
-                    alert(data.message);
-                    location.reload();
+                    const supplierData = data.data;
+                    
+                    // Update form fields
+                    document.getElementById('edit_supplier_id').value = supplierData.PK_SUPPLIER_ID;
+                    document.getElementById('supplier_number').textContent = supplierData.PK_SUPPLIER_ID;
+                    document.getElementById('edit_fname').value = supplierData.S_FNAME;
+                    document.getElementById('edit_lname').value = supplierData.S_LNAME;
+                    document.getElementById('edit_email').value = supplierData.EMAIL;
+                    document.getElementById('edit_company').value = supplierData.COMPANY_NAME;
+                    document.getElementById('edit_phone').value = supplierData.PHONE_NUM;
+                    document.getElementById('edit_address').value = supplierData.SUPPLIER_ADDRESS;
+                    
+                    // Update profile image
+                    const profilePreview = document.getElementById('profile_preview');
+                    if (supplierData.SUPPLIER_IMAGE) {
+                        profilePreview.src = `uploads/${supplierData.SUPPLIER_IMAGE}`;
+                    } else {
+                        profilePreview.src = 'assets/default-profile.png';
+                    }
+                    
+                    // Show modal
+                    const modal = document.getElementById('editModal');
+                    modal.style.display = 'block';
+                    Swal.close();
                 } else {
-                    alert(data.message);
+                    throw new Error(data.message || 'Failed to load supplier data');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error deleting supplier');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: error.message || 'Failed to load supplier data'
+                });
             });
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        modal.style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target == modal) {
+            closeEditModal();
         }
+    }
+
+    function deleteSupplier(supplierId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('Admin_delete_supplier.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ supplier_id: supplierId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: error.message || 'Failed to delete supplier'
+                    });
+                });
+            }
+        });
     }
     </script>
 </body>

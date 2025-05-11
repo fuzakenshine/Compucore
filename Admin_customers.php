@@ -2,6 +2,95 @@
 session_start();
 include 'db_connect.php';
 
+// Handle POST request for editing customer
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit') {
+    try {
+        $customer_id = filter_var($_POST['customer_id'], FILTER_SANITIZE_NUMBER_INT);
+        $fname = htmlspecialchars(trim($_POST['f_name']), ENT_QUOTES, 'UTF-8');
+        $lname = htmlspecialchars(trim($_POST['l_name']), ENT_QUOTES, 'UTF-8');
+        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+        $phone = htmlspecialchars(trim($_POST['phone_num']), ENT_QUOTES, 'UTF-8');
+        $address = htmlspecialchars(trim($_POST['address']), ENT_QUOTES, 'UTF-8');
+
+        // Start transaction
+        $conn->begin_transaction();
+
+        // Update basic info
+        $update_stmt = $conn->prepare("UPDATE customer SET 
+            F_NAME = ?, 
+            L_NAME = ?, 
+            EMAIL = ?, 
+            PHONE_NUM = ?,
+            CUSTOMER_ADDRESS = ?,
+            UPDATE_AT = CURRENT_TIMESTAMP 
+            WHERE PK_CUSTOMER_ID = ?");
+            
+        if (!$update_stmt) {
+            throw new Exception("Prepare update failed: " . $conn->error);
+        }
+
+        $update_stmt->bind_param("sssssi", 
+            $fname, 
+            $lname, 
+            $email, 
+            $phone,
+            $address,
+            $customer_id
+        );
+        
+        if (!$update_stmt->execute()) {
+            throw new Exception("Execute update failed: " . $update_stmt->error);
+        }
+
+        // Handle image upload if present
+        if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
+            $allowed = ['jpg', 'jpeg', 'png'];
+            $filename = $_FILES['profile_pic']['name'];
+            $filetype = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            if (in_array($filetype, $allowed)) {
+                $newname = 'customer_' . uniqid() . '.' . $filetype;
+                $upload_path = 'uploads/profiles/' . $newname;
+
+                if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_path)) {
+                    // Get old image filename
+                    $img_stmt = $conn->prepare("SELECT PROFILE_PIC FROM customer WHERE PK_CUSTOMER_ID = ?");
+                    $img_stmt->bind_param("i", $customer_id);
+                    $img_stmt->execute();
+                    $old_image = $img_stmt->get_result()->fetch_assoc()['PROFILE_PIC'];
+
+                    // Update database with new image
+                    $img_update = $conn->prepare("UPDATE customer SET PROFILE_PIC = ? WHERE PK_CUSTOMER_ID = ?");
+                    $img_update->bind_param("si", $newname, $customer_id);
+                    $img_update->execute();
+
+                    // Delete old image if exists
+                    if ($old_image && file_exists('uploads/profiles/' . $old_image)) {
+                        unlink('uploads/profiles/' . $old_image);
+                    }
+                }
+            }
+        }
+
+        // Commit transaction
+        $conn->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Customer updated successfully'
+        ]);
+        exit;
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("Error in customer update: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
 /**
 $admin_id = $_SESSION['user_id'];*/
 $adminQuery = $conn->prepare("SELECT CONCAT(F_NAME, ' ', L_NAME) as full_name FROM users WHERE PK_USER_ID = ?");
@@ -680,17 +769,19 @@ $result = $conn->query($sql);
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-profile-header">
-                <div class="profile-upload-container">
+                <div class="profile-upload-container" onclick="document.getElementById('edit_image').click()">
                     <img id="profile_preview" src="assets/default-profile.png" alt="Profile Picture">
                     <div class="upload-overlay">
                         <i class="fas fa-camera"></i>
-                        <span>View Photo</span>
+                        <span>Change Photo</span>
                     </div>
                 </div>
             </div>
 
-            <form id="editForm" method="POST">
+            <form id="editForm" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="customer_id" id="edit_customer_id">
+                <input type="hidden" name="action" value="edit">
+                <input type="file" id="edit_image" name="profile_pic" accept="image/*" style="display: none;">
                 
                 <div class="customer-id-display">
                     Customer #<span id="customer_number"></span>
@@ -741,121 +832,196 @@ $result = $conn->query($sql);
 
     <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('editModal');
-    const closeBtn = document.getElementsByClassName('close')[0];
+    // Initialize form submission handler
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', handleFormSubmit);
+    }
 
-    // Function to edit customer
-    window.editCustomer = function(customerId) {
-        // Fetch customer data
-        fetch(`get_customer.php?id=${customerId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('edit_customer_id').value = data.PK_CUSTOMER_ID;
-                document.getElementById('customer_number').textContent = data.PK_CUSTOMER_ID;
-                document.getElementById('edit_fname').value = data.F_NAME;
-                document.getElementById('edit_lname').value = data.L_NAME;
-                document.getElementById('edit_email').value = data.EMAIL;
-                document.getElementById('edit_phone').value = data.PHONE_NUM;
-                document.getElementById('edit_address').value = data.CUSTOMER_ADDRESS;
+    // Initialize image preview handler
+    const imageInput = document.getElementById('edit_image');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImagePreview);
+    }
+});
 
-                // Update profile picture
+function handleImagePreview(e) {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profile_preview').src = e.target.result;
+        };
+        reader.readAsDataURL(this.files[0]);
+    }
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+    
+    const formData = new FormData(this);
+    formData.append('action', 'edit');
+    
+    fetch('Admin_customers.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                closeModal();
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Failed to update customer'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'An unexpected error occurred'
+        });
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function editCustomer(customerId) {
+    console.log('Opening modal for customer:', customerId); // Debug log
+    
+    // Show loading state
+    Swal.fire({
+        title: 'Loading...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Fetch customer data
+    fetch(`get_customer.php?id=${customerId}`)
+        .then(response => {
+            console.log('Response status:', response.status); // Debug log
+            return response.json();
+        })
+        .then(data => {
+            console.log('Received data:', data); // Debug log
+            
+            if (data.success) {
+                const customerData = data.data;
+                
+                // Update form fields
+                document.getElementById('edit_customer_id').value = customerData.PK_CUSTOMER_ID;
+                document.getElementById('customer_number').textContent = customerData.PK_CUSTOMER_ID;
+                document.getElementById('edit_fname').value = customerData.F_NAME;
+                document.getElementById('edit_lname').value = customerData.L_NAME;
+                document.getElementById('edit_email').value = customerData.EMAIL;
+                document.getElementById('edit_phone').value = customerData.PHONE_NUM;
+                document.getElementById('edit_address').value = customerData.CUSTOMER_ADDRESS;
+                
+                // Update profile image
                 const profilePreview = document.getElementById('profile_preview');
-                if (data.PROFILE_PIC) {
-                    profilePreview.src = `uploads/profiles/${data.PROFILE_PIC}`;
+                if (customerData.PROFILE_PIC) {
+                    profilePreview.src = `uploads/profiles/${customerData.PROFILE_PIC}`;
                 } else {
                     profilePreview.src = 'uploads/profiles/default-avatar.png';
                 }
                 
+                // Show modal
+                const modal = document.getElementById('editModal');
                 modal.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error fetching customer data');
+                Swal.close();
+            } else {
+                throw new Error(data.message || 'Failed to load customer data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: error.message || 'Failed to load customer data'
             });
-    }
+        });
+}
 
-    // Function to delete customer
-    window.deleteCustomer = function(customerId) {
-        if (confirm('Are you sure you want to delete this customer?')) {
+function closeModal() {
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('editModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+function deleteCustomer(customerId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
             fetch('delete_customer.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ customer_id: customerId })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
                 } else {
-                    alert('Error deleting customer');
+                    throw new Error(data.message);
                 }
-            });
-        }
-    }
-
-    // Function to close modal
-    window.closeModal = function() {
-        modal.style.display = 'none';
-    }
-
-    // Close modal when clicking on X
-    closeBtn.onclick = closeModal;
-
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
-
-    // Replace the existing form submission code
-    document.getElementById('editForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-        fetch('update_customer.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'Customer updated successfully',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    closeModal();
-                    location.reload();
+                    icon: 'error',
+                    title: 'Error!',
+                    text: error.message || 'Failed to delete customer'
                 });
-            } else {
-                throw new Error(data.message || 'Error updating customer');
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: error.message || 'Error updating customer'
             });
-        })
-        .finally(() => {
-            // Reset button state
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        });
+        }
     });
-});
+}
 </script>
 </body>
 </html>
