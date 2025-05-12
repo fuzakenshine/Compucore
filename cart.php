@@ -23,9 +23,10 @@ function checkProductStock($conn, $product_id, $requested_qty) {
 
 // Fetch cart items for the logged-in user
 $user_id = $_SESSION['customer_id'];
-$sql = "SELECT c.*, p.IMAGE, p.PROD_NAME, p.QTY as available_stock 
+$sql = "SELECT c.*, p.IMAGE, p.PROD_NAME, p.QTY as available_stock, s.COMPANY_NAME as supplier_name 
         FROM cart c 
         JOIN products p ON c.product_id = p.PK_PRODUCT_ID 
+        LEFT JOIN supplier s ON p.FK2_SUPPLIER_ID = s.PK_SUPPLIER_ID
         WHERE c.customer_id = ? 
         ORDER BY c.created_at DESC";
 $stmt = $conn->prepare($sql);
@@ -288,6 +289,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             font-size: 18px;
             margin-bottom: 10px;
             color: #333;
+        }
+
+        .supplier-info {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .supplier-info i {
+            color: #888;
+            font-size: 12px;
         }
 
         .price-details {
@@ -553,12 +568,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                              class="cart-item-image">
                         <div class="cart-item-details">
                             <h3><?php echo htmlspecialchars($row['PROD_NAME']); ?></h3>
+                            <div class="supplier-info">
+                                <i class="fas fa-truck"></i>
+                                <span><?php echo htmlspecialchars($row['supplier_name']); ?></span>
+                            </div>
                             <div class="price-details">
                                 <p>Price: ₱<?php echo number_format($row['product_price'], 2); ?></p>
                                 <p class="item-total">Total: ₱<?php echo number_format($total, 2); ?></p>
-                                <p class="stock-info <?php echo $row['quantity'] > $row['available_stock'] ? 'stock-warning' : ''; ?>">
-                                    Available Stock: <?php echo $row['available_stock']; ?>
-                                </p>
+                
                             </div>
                         </div>
                     </div>

@@ -19,9 +19,10 @@ $user_result = $stmt->get_result();
 $user_data = $user_result->fetch_assoc();
 
 // Fetch cart items
-$cart_sql = "SELECT c.*, p.IMAGE, p.PROD_NAME
+$cart_sql = "SELECT c.*, p.IMAGE, p.PROD_NAME, s.COMPANY_NAME, s.PK_SUPPLIER_ID
              FROM cart c 
              JOIN products p ON c.product_id = p.PK_PRODUCT_ID 
+             JOIN supplier s ON p.FK2_SUPPLIER_ID = s.PK_SUPPLIER_ID
              WHERE c.customer_id = ?";
 if (isset($_GET['selected_items'])) {
     $selected_items = explode(',', $_GET['selected_items']);
@@ -38,8 +39,24 @@ if (isset($_GET['selected_items'])) {
 $stmt->execute();
 $cart_result = $stmt->get_result();
 
-// Calculate totals
+// Group cart items by supplier
+$supplier_items = [];
 $subtotal = 0;
+while($cart_item = $cart_result->fetch_assoc()) {
+    $supplier_id = $cart_item['PK_SUPPLIER_ID'];
+    if (!isset($supplier_items[$supplier_id])) {
+        $supplier_items[$supplier_id] = [
+            'company_name' => $cart_item['COMPANY_NAME'],
+            'items' => [],
+            'subtotal' => 0
+        ];
+    }
+    $supplier_items[$supplier_id]['items'][] = $cart_item;
+    $supplier_items[$supplier_id]['subtotal'] += $cart_item['product_price'] * $cart_item['quantity'];
+    $subtotal += $cart_item['product_price'] * $cart_item['quantity'];
+}
+
+// Calculate totals
 $protection_fee = 132; // Electronic Protection fee from image
 ?>
 
@@ -565,6 +582,23 @@ $protection_fee = 132; // Electronic Protection fee from image
                 min-width: unset;
             }
         }
+        .supplier-group {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .supplier-subtotal {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            font-weight: bold;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -597,34 +631,30 @@ $protection_fee = 132; // Electronic Protection fee from image
 
             <div class="checkout-section">
                 <h2 class="section-title"><i class="fas fa-store"></i> Order Details</h2>
-                <div class="store-section">
-                    <img src="uploads/LOGO.PNG" alt="Store Logo" style="width: 65px; height: 65px;">
-                    <h3>CompuCore</h3>
-                </div>
-                <?php while($cart_item = $cart_result->fetch_assoc()): 
-                    $subtotal += $cart_item['product_price'] * $cart_item['quantity'];
-                ?>
-                <div class="product-item">
-                    <img src="uploads/<?php echo htmlspecialchars($cart_item['IMAGE']); ?>" alt="Product" class="product-image">
-                    <div class="product-details">
-                        <h4><?php echo htmlspecialchars($cart_item['PROD_NAME']); ?></h4>
-                        <p>₱<?php echo number_format($cart_item['product_price'], 2); ?></p>
-                        <p>Quantity: <?php echo $cart_item['quantity']; ?></p>
+                <?php foreach($supplier_items as $supplier_id => $supplier_data): ?>
+                <div class="supplier-group">
+                    <div class="store-section">
+                        <img src="uploads/LOGO.PNG" alt="Store Logo" style="width: 65px; height: 65px;">
+                        <h3><?php echo htmlspecialchars($supplier_data['company_name']); ?></h3>
                     </div>
-                </div>
-                <?php endwhile; ?>
-            </div>
-
-            <div class="checkout-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h2 class="section-title"><i class="fas fa-truck"></i> Shipping Options</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="section-content">
-                    <form id="shipping-form" class="shipping-form">
+                    <?php foreach($supplier_data['items'] as $cart_item): ?>
+                    <div class="product-item">
+                        <img src="uploads/<?php echo htmlspecialchars($cart_item['IMAGE']); ?>" alt="Product" class="product-image">
+                        <div class="product-details">
+                            <h4><?php echo htmlspecialchars($cart_item['PROD_NAME']); ?></h4>
+                            <p>₱<?php echo number_format($cart_item['product_price'], 2); ?></p>
+                            <p>Quantity: <?php echo $cart_item['quantity']; ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h2 class="section-title"><i class="fas fa-truck"></i> Shipping Options for <?php echo htmlspecialchars($supplier_data['company_name']); ?></h2>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
                         <div class="shipping-option">
-                            <input type="radio" id="standard" name="shipping_method" value="standard" checked>
-                            <label for="standard">
+                            <input type="radio" id="standard_<?php echo $supplier_id; ?>" name="shipping_method_<?php echo $supplier_id; ?>" value="standard" checked>
+                            <label for="standard_<?php echo $supplier_id; ?>">
                                 <div class="shipping-details">
                                     <strong>Standard Local</strong>
                                     <p>Guaranteed to get by 5 - 8 May</p>
@@ -633,8 +663,8 @@ $protection_fee = 132; // Electronic Protection fee from image
                             </label>
                         </div>
                         <div class="shipping-option">
-                            <input type="radio" id="express" name="shipping_method" value="express">
-                            <label for="express">
+                            <input type="radio" id="express_<?php echo $supplier_id; ?>" name="shipping_method_<?php echo $supplier_id; ?>" value="express">
+                            <label for="express_<?php echo $supplier_id; ?>">
                                 <div class="shipping-details">
                                     <strong>Express Delivery</strong>
                                     <p>Guaranteed to get by 3 - 4 May</p>
@@ -643,8 +673,8 @@ $protection_fee = 132; // Electronic Protection fee from image
                             </label>
                         </div>
                         <div class="shipping-option">
-                            <input type="radio" id="same-day" name="shipping_method" value="same-day">
-                            <label for="same-day">
+                            <input type="radio" id="same-day_<?php echo $supplier_id; ?>" name="shipping_method_<?php echo $supplier_id; ?>" value="same-day">
+                            <label for="same-day_<?php echo $supplier_id; ?>">
                                 <div class="shipping-details">
                                     <strong>Same Day Delivery</strong>
                                     <p>Guaranteed delivery within 24 hours</p>
@@ -652,8 +682,13 @@ $protection_fee = 132; // Electronic Protection fee from image
                                 </div>
                             </label>
                         </div>
-                    </form>
+                    </div>
+                    <div class="supplier-subtotal">
+                        <span>Subtotal for <?php echo htmlspecialchars($supplier_data['company_name']); ?>:</span>
+                        <span>₱<?php echo number_format($supplier_data['subtotal'], 2); ?></span>
+                    </div>
                 </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="checkout-section">
@@ -709,40 +744,37 @@ $protection_fee = 132; // Electronic Protection fee from image
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Handle shipping fee updates
-        const shippingForm = document.getElementById('shipping-form');
-        const shippingFeeElement = document.getElementById('shipping-fee');
-        const totalAmountElement = document.getElementById('total-amount');
-        const subtotal = <?php echo $subtotal; ?>;
-
-        function updateTotal(shippingCost) {
-            const total = subtotal + shippingCost;
-            totalAmountElement.textContent = '₱' + total.toFixed(2);
-        }
-
-        shippingForm.addEventListener('change', function(e) {
-            if (e.target.name === 'shipping_method') {
-                let shippingCost = 0;
-                let shippingText = 'Free';
-
-                switch(e.target.value) {
+        // Update the shipping fee calculation to handle multiple suppliers
+        function updateTotal() {
+            let totalShipping = 0;
+            let total = <?php echo $subtotal; ?>;
+            
+            // Get all shipping method inputs
+            const shippingInputs = document.querySelectorAll('input[type="radio"][name^="shipping_method_"]:checked');
+            
+            shippingInputs.forEach(input => {
+                switch(input.value) {
                     case 'express':
-                        shippingCost = 150;
-                        shippingText = '₱150.00';
+                        totalShipping += 150;
                         break;
                     case 'same-day':
-                        shippingCost = 250;
-                        shippingText = '₱250.00';
+                        totalShipping += 250;
                         break;
-                    default:
-                        shippingCost = 0;
-                        shippingText = 'Free';
                 }
+            });
+            
+            total += totalShipping;
+            document.getElementById('shipping-fee').textContent = totalShipping > 0 ? '₱' + totalShipping.toFixed(2) : 'Free';
+            document.getElementById('total-amount').textContent = '₱' + total.toFixed(2);
+        }
 
-                shippingFeeElement.textContent = shippingText;
-                updateTotal(shippingCost);
-            }
+        // Add event listeners to all shipping method inputs
+        document.querySelectorAll('input[type="radio"][name^="shipping_method_"]').forEach(input => {
+            input.addEventListener('change', updateTotal);
         });
+
+        // Initialize total on page load
+        document.addEventListener('DOMContentLoaded', updateTotal);
 
         document.querySelector('.place-order-btn').addEventListener('click', function() {
             // Show processing popup
@@ -759,12 +791,14 @@ $protection_fee = 132; // Electronic Protection fee from image
             });
 
             // Get selected shipping and payment methods
-            const shippingMethod = document.querySelector('input[name="shipping_method"]:checked').value;
+            const shippingMethods = document.querySelectorAll('input[type="radio"][name^="shipping_method_"]:checked');
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
             
             // Create form data
             const formData = new FormData();
-            formData.append('shipping_method', shippingMethod);
+            shippingMethods.forEach(input => {
+                formData.append('shipping_method', input.value);
+            });
             formData.append('payment_method', paymentMethod);
             
             // Get selected items from URL if present
@@ -805,6 +839,7 @@ $protection_fee = 132; // Electronic Protection fee from image
             });
         });
 
+        // Update the toggleSection function to handle multiple sections
         function toggleSection(header) {
             const content = header.nextElementSibling;
             const isActive = header.classList.contains('active');
@@ -824,10 +859,15 @@ $protection_fee = 132; // Electronic Protection fee from image
 
         // Open first section by default on page load
         document.addEventListener('DOMContentLoaded', function() {
-            const firstSection = document.querySelector('.section-header');
-            if (firstSection) {
-                toggleSection(firstSection);
-            }
+            // Open the first shipping section for each supplier
+            document.querySelectorAll('.supplier-group .section-header').forEach((header, index) => {
+                if (index === 0) {
+                    toggleSection(header);
+                }
+            });
+            
+            // Initialize total
+            updateTotal();
         });
     </script>
     <?php include 'footer.php'; ?>

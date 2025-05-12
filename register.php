@@ -27,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Email validation
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/@gmail\.com$/', $email)) {
-        $errors[] = "Please enter a valid Gmail address";
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/@(gmail|yahoo|email)\.com$/', $email)) {
+        $errors[] = "Please enter a valid email address (@gmail.com, @yahoo.com, or @email.com)";
     }
     
     // Phone validation
@@ -199,19 +199,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
         
         .form-group input:focus {
-            border-color: #d32f2f;
+            border-color: #4CAF50;
             outline: none;
-            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+
+        .form-group input.valid {
+            border-color: #4CAF50;
+            background-color: #f8fff8;
+        }
+
+        .form-group input.invalid {
+            border-color: #d32f2f;
+            background-color: #fff8f8;
         }
         
         .error-message {
             color: #d32f2f;
             font-size: 12px;
             display: none;
+            margin-top: 4px;
+        }
+
+        .success-message {
+            color: #4CAF50;
+            font-size: 12px;
+            display: none;
+            margin-top: 4px;
         }
         
         .password-requirements {
@@ -225,10 +243,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             gap: 5px;
             margin: 2px 0;
+            transition: color 0.3s ease;
         }
         
         .requirement i {
             font-size: 10px;
+            transition: color 0.3s ease;
         }
         
         .requirement.valid {
@@ -279,21 +299,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <input type="text" name="first_name" id="first_name" placeholder="First Name" required>
                 <div class="error-message" id="first_name_error"></div>
+                <div class="success-message" id="first_name_success"></div>
             </div>
             
             <div class="form-group">
                 <input type="text" name="last_name" id="last_name" placeholder="Last Name" required>
                 <div class="error-message" id="last_name_error"></div>
+                <div class="success-message" id="last_name_success"></div>
             </div>
             
             <div class="form-group">
-                <input type="email" name="email" id="email" placeholder="Gmail Address" required>
+                <input type="email" name="email" id="email" placeholder="Email Address (@gmail.com, @yahoo.com, or @email.com)" required>
                 <div class="error-message" id="email_error"></div>
+                <div class="success-message" id="email_success"></div>
             </div>
             
             <div class="form-group">
                 <input type="text" name="phone_num" id="phone_num" placeholder="Phone Number (e.g., +631234567890)" required>
                 <div class="error-message" id="phone_error"></div>
+                <div class="success-message" id="phone_success"></div>
             </div>
             
             <div class="form-group">
@@ -326,6 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fas fa-eye toggle-password" onclick="togglePassword('confirm_password')"></i>
                 </div>
                 <div class="error-message" id="confirm_password_error"></div>
+                <div class="success-message" id="confirm_password_success"></div>
             </div>
             
             <div class="form-group">
@@ -345,30 +370,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirm_password');
         
-        function validateName(input, errorElement) {
+        function validateName(input, errorElement, successElement) {
             const nameRegex = /^[a-zA-Z\s]*$/;
             const isValid = nameRegex.test(input.value);
-            errorElement.style.display = isValid ? 'none' : 'block';
-            errorElement.textContent = isValid ? '' : 'Name must only contain letters and spaces';
+            
+            if (isValid) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                errorElement.style.display = 'none';
+                successElement.style.display = 'block';
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                errorElement.style.display = 'block';
+                successElement.style.display = 'none';
+                errorElement.textContent = 'Name must only contain letters and spaces';
+            }
             return isValid;
         }
         
         function validateEmail(input) {
             const emailError = document.getElementById('email_error');
-            const isGmail = /@gmail\.com$/.test(input.value);
+            const emailSuccess = document.getElementById('email_success');
+            const isValidDomain = /@(gmail|yahoo|email)\.com$/.test(input.value);
             const isValidFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
             
-            emailError.style.display = (isValidFormat && isGmail) ? 'none' : 'block';
-            emailError.textContent = !isValidFormat ? 'Please enter a valid email address' : 
-                                   !isGmail ? 'Email must be a Gmail address' : '';
-            return isValidFormat && isGmail;
+            if (isValidFormat && isValidDomain) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                emailError.style.display = 'none';
+                emailSuccess.style.display = 'block';
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                emailError.style.display = 'block';
+                emailSuccess.style.display = 'none';
+                emailError.textContent = !isValidFormat ? 'Please enter a valid email address' : 
+                                       'Email must be from gmail.com, yahoo.com, or email.com';
+            }
+            return isValidFormat && isValidDomain;
         }
         
         function validatePhone(input) {
             const phoneError = document.getElementById('phone_error');
+            const phoneSuccess = document.getElementById('phone_success');
             const isValid = /^\+[1-9]\d{1,14}$/.test(input.value);
-            phoneError.style.display = isValid ? 'none' : 'block';
-            phoneError.textContent = isValid ? '' : 'Enter a valid phone number with country code (e.g., +631234567890)';
+            
+            if (isValid) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                phoneError.style.display = 'none';
+                phoneSuccess.style.display = 'block';
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                phoneError.style.display = 'block';
+                phoneSuccess.style.display = 'none';
+                phoneError.textContent = 'Enter a valid phone number with country code (e.g., +631234567890)';
+            }
             return isValid;
         }
         
@@ -411,15 +470,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     isValid = false;
                 }
             });
+
+            if (isValid) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+            }
             
             return isValid;
         }
         
         function validateConfirmPassword() {
             const error = document.getElementById('confirm_password_error');
+            const success = document.getElementById('confirm_password_success');
             const isValid = password.value === confirmPassword.value;
-            error.style.display = isValid ? 'none' : 'block';
-            error.textContent = isValid ? '' : 'Passwords do not match';
+            
+            if (isValid) {
+                confirmPassword.classList.add('valid');
+                confirmPassword.classList.remove('invalid');
+                error.style.display = 'none';
+                success.style.display = 'block';
+            } else {
+                confirmPassword.classList.add('invalid');
+                confirmPassword.classList.remove('valid');
+                error.style.display = 'block';
+                success.style.display = 'none';
+                error.textContent = 'Passwords do not match';
+            }
             return isValid;
         }
         
@@ -439,11 +518,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Add real-time validation
         document.getElementById('first_name').addEventListener('input', function() {
-            validateName(this, document.getElementById('first_name_error'));
+            validateName(this, 
+                document.getElementById('first_name_error'),
+                document.getElementById('first_name_success')
+            );
         });
         
         document.getElementById('last_name').addEventListener('input', function() {
-            validateName(this, document.getElementById('last_name_error'));
+            validateName(this, 
+                document.getElementById('last_name_error'),
+                document.getElementById('last_name_success')
+            );
         });
         
         document.getElementById('email').addEventListener('input', function() {
@@ -465,9 +550,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             e.preventDefault();
             
             const isValidFirstName = validateName(document.getElementById('first_name'), 
-                                                document.getElementById('first_name_error'));
+                                                document.getElementById('first_name_error'),
+                                                document.getElementById('first_name_success')
+                                            );
             const isValidLastName = validateName(document.getElementById('last_name'), 
-                                               document.getElementById('last_name_error'));
+                                               document.getElementById('last_name_error'),
+                                               document.getElementById('last_name_success')
+                                            );
             const isValidEmail = validateEmail(document.getElementById('email'));
             const isValidPhone = validatePhone(document.getElementById('phone_num'));
             const isValidPassword = validatePassword(password);

@@ -8,8 +8,10 @@ if ($product_id) {
     // Update query to use REVIEWS table instead of ratings
     $sql = "SELECT p.*, 
             (SELECT AVG(RATING) FROM REVIEWS WHERE FK2_PRODUCT_ID = p.PK_PRODUCT_ID) as avg_rating,
-            (SELECT COUNT(*) FROM REVIEWS WHERE FK2_PRODUCT_ID = p.PK_PRODUCT_ID) as review_count
+            (SELECT COUNT(*) FROM REVIEWS WHERE FK2_PRODUCT_ID = p.PK_PRODUCT_ID) as review_count,
+            s.COMPANY_NAME as supplier_name
             FROM products p 
+            LEFT JOIN supplier s ON p.FK2_SUPPLIER_ID = s.PK_SUPPLIER_ID
             WHERE p.PK_PRODUCT_ID = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $product_id);
@@ -95,6 +97,17 @@ if ($product_id) {
             color: #d32f2f;
             margin-bottom: 10px;
             font-size: 32px;
+        }
+        .supplier-info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .supplier-info i {
+            color: #888;
         }
         .rating-box {
             display: flex;
@@ -481,6 +494,10 @@ if ($product_id) {
             </div>
             <div class="product-info">
                 <h1 class="product-name"><?php echo htmlspecialchars($product['PROD_NAME']); ?></h1>
+                <div class="supplier-info">
+                    <i class="fas fa-truck"></i>
+                    <span>Supplier: <?php echo htmlspecialchars($product['supplier_name']); ?></span>
+                </div>
                 <div class="rating-box">
                     <div class="stars">
                         <?php

@@ -21,6 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $fname = htmlspecialchars(trim($_POST['fname']), ENT_QUOTES, 'UTF-8');
         $lname = htmlspecialchars(trim($_POST['lname']), ENT_QUOTES, 'UTF-8');
         $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+        
+        // Validate email domain
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/@(gmail|yahoo|email)\.com$/', $email)) {
+            throw new Exception("Email must be from gmail.com, yahoo.com, or email.com");
+        }
+        
         $company = htmlspecialchars(trim($_POST['company']), ENT_QUOTES, 'UTF-8');
         $phone = htmlspecialchars(trim($_POST['phone']), ENT_QUOTES, 'UTF-8');
         $address = htmlspecialchars(trim($_POST['address']), ENT_QUOTES, 'UTF-8');
@@ -623,7 +629,7 @@ $result = $conn->query($sql);
                 <div class="form-row">
                     <div class="form-group">
                         <label for="edit_email"><i class="fas fa-envelope"></i> Email</label>
-                        <input type="email" id="edit_email" name="email" required>
+                        <input type="email" id="edit_email" name="email" placeholder="Email (@gmail.com, @yahoo.com, or @email.com)" required>
                     </div>
                     
                     <div class="form-group">
@@ -682,6 +688,17 @@ $result = $conn->query($sql);
 
     function handleFormSubmit(e) {
         e.preventDefault();
+        
+        // Validate email domain before submission
+        const email = document.getElementById('edit_email').value;
+        if (!email.match(/@(gmail|yahoo|email)\.com$/)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Email',
+                text: 'Email must be from gmail.com, yahoo.com, or email.com'
+            });
+            return;
+        }
         
         const submitBtn = this.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;

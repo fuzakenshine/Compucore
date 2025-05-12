@@ -143,12 +143,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
         .form-group input:focus {
-            border-color: #d32f2f;
+            border-color: #4CAF50;
             outline: none;
-            box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+        .form-group input.valid {
+            border-color: #4CAF50;
+            background-color: #f8fff8;
+        }
+        .form-group input.invalid {
+            border-color: #d32f2f;
+            background-color: #fff8f8;
         }
         .input-with-icon {
             position: relative;
@@ -196,9 +204,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .error-message {
             color: #d32f2f;
-            font-size: 14px;
-            margin-top: 5px;
+            font-size: 12px;
             display: none;
+            margin-top: 4px;
+        }
+        .success-message {
+            color: #4CAF50;
+            font-size: 12px;
+            display: none;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -218,8 +232,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <form id="loginForm" method="POST" novalidate>
             <div class="form-group">
-                <input type="email" name="email" id="email" placeholder="Gmail Address" required>
+                <input type="email" name="email" id="email" placeholder="Email Address" required>
                 <div class="error-message" id="email_error"></div>
+                <div class="success-message" id="email_success"></div>
             </div>
             
             <div class="form-group">
@@ -228,9 +243,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fas fa-eye toggle-password" onclick="togglePassword('password')"></i>
                 </div>
                 <div class="error-message" id="password_error"></div>
+                <div class="success-message" id="password_success"></div>
             </div>
             
-            <button type="submit" id="submitBtn" style="background-color: #d32f2f; color: white; width: 36vh;">Login</button>
+            <button type="submit" id="submitBtn" style="background-color: #d32f2f; color: white; width: 35.7vh;">Login</button>
         </form>
         
         <div class="register">
@@ -255,64 +271,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         function validateEmail(input) {
             const emailError = document.getElementById('email_error');
-            const isGmail = /@gmail\.com$/.test(input.value);
+            const emailSuccess = document.getElementById('email_success');
+            const isValidDomain = /@(gmail|yahoo|email)\.com$/.test(input.value);
             const isValidFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
             
-            emailError.style.display = (isValidFormat && isGmail) ? 'none' : 'block';
-            emailError.textContent = !isValidFormat ? 'Please enter a valid email address' : 
-                                   !isGmail ? 'Email must be a Gmail address' : '';
-            return isValidFormat && isGmail;
+            if (isValidFormat && isValidDomain) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                emailError.style.display = 'none';
+                emailSuccess.style.display = 'block';
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                emailError.style.display = 'block';
+                emailSuccess.style.display = 'none';
+                emailError.textContent = !isValidFormat ? 'Please enter a valid email address' : 
+                                       'Email must be from gmail.com, yahoo.com, or email.com';
+            }
+            return isValidFormat && isValidDomain;
         }
         
+        function validatePassword(input) {
+            const passwordError = document.getElementById('password_error');
+            const passwordSuccess = document.getElementById('password_success');
+            
+            if (input.value.length >= 8) {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                passwordError.style.display = 'none';
+                passwordSuccess.style.display = 'block';
+            } else {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                passwordError.style.display = 'block';
+                passwordSuccess.style.display = 'none';
+                passwordError.textContent = 'Password must be at least 8 characters';
+            }
+            return input.value.length >= 8;
+        }
+        
+        // Add real-time validation
         document.getElementById('email').addEventListener('input', function() {
             validateEmail(this);
         });
         
-  // In your login.php file, update the form submission handler
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const isValidEmail = validateEmail(document.getElementById('email'));
-    
-    if (isValidEmail) {
-        const formData = new FormData(this);
+        document.getElementById('password').addEventListener('input', function() {
+            validatePassword(this);
+        });
         
-        fetch('login.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin' // Add this line to ensure cookies are sent
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Login Successful!',
-                    text: 'Welcome back!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    // Use window.location.replace for more reliable redirect
-                    window.location.replace(data.redirect);
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Login Failed',
-                    text: data.message
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isValidEmail = validateEmail(document.getElementById('email'));
+            const isValidPassword = validatePassword(document.getElementById('password'));
+            
+            if (isValidEmail && isValidPassword) {
+                const formData = new FormData(this);
+                
+                fetch('login.php', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Login Successful!',
+                            text: 'Welcome back!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.replace(data.redirect);
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Login Failed',
+                            text: data.message
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Something went wrong! Please try again.'
+                    });
                 });
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Something went wrong! Please try again.'
-            });
         });
-    }
-});
     </script>
 </body>
 </html>

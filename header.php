@@ -438,7 +438,7 @@
         <div class="search-bar">
             <form action="search_results.php" method="GET">
                 <input type="text" name="search_query" placeholder="Search products..." required>
-                <button type="submit"><i class="fas fa-search"></i></button>
+                <button type="submit" style="border: none; border-radius: 50%; padding: 5px; cursor: pointer; margin-top: 3px;"><i class="fas fa-search"></i></button>
             </form>
         </div>
         <div class="icons">
@@ -539,13 +539,15 @@
                                 
                                 container.appendChild(notificationElement);
                                 
-                                // Add click handler to mark as read
+                                // Add click handler to mark as read and redirect
                                 notificationElement.addEventListener('click', function() {
                                     if (this.classList.contains('unread')) {
                                         markNotificationAsRead(this.getAttribute('data-id'));
                                         this.classList.remove('unread');
                                         updateBadgeCount();
                                     }
+                                    // Redirect to my_orders.php
+                                    window.location.href = 'my_orders.php';
                                 });
                             });
                         }

@@ -28,8 +28,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!preg_match("/^[A-Za-z .'-]+$/", $lname)) {
         $errors[] = "Last name is invalid.";
     }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Email is invalid.";
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/@(gmail|yahoo|email)\.com$/', $email)) {
+        $errors[] = "Email must be from gmail.com, yahoo.com, or email.com";
     }
     if (!preg_match("/^\\+?\\d{10,15}$/", $phone)) {
         $errors[] = "Phone number is invalid.";
@@ -312,7 +312,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Email: <input type="email" name="email" required></label>
+                    <label>Email: <input type="email" name="email" placeholder="Email (@gmail.com, @yahoo.com, or @email.com)" required></label>
                 </div>
                 <div class="form-group">
                     <label>Phone Number: <input type="text" name="phone" required></label>
@@ -368,9 +368,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             // Email validation
-            if (!email.match(/^[^@]+@[^@]+\.[^@]+$/)) {
+            if (!email.match(/^[^@]+@[^@]+\.[^@]+$/) || !email.match(/@(gmail|yahoo|email)\.com$/)) {
                 valid = false;
-                messages.push("Email is invalid.");
+                messages.push("Email must be from gmail.com, yahoo.com, or email.com");
             }
 
             // Phone validation (Philippines format, adjust as needed)
