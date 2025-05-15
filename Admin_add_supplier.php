@@ -54,9 +54,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $target_file = $target_dir . basename($image);
 
     if (move_uploaded_file($_FILES['photo']['tmp_name'], $target_file)) {
-        // Use prepared statement to prevent SQL injection
-        $sql = "INSERT INTO supplier (FK_USER_ID, S_FNAME, S_LNAME, PHONE_NUM, COMPANY_NAME, EMAIL, SUPPLIER_ADDRESS, SUPPLIER_IMAGE, UPDATE_AT) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        // Use stored procedure instead of direct INSERT
+        $sql = "CALL populateSUPPLIER(?, ?, ?, ?, ?, ?, ?, ?)";
                 
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("isssssss", 

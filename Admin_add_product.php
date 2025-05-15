@@ -19,6 +19,7 @@ $adminName = $adminQuery->get_result()->fetch_assoc()['full_name'];
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    echo "<!-- Debug: Form submitted -->";
     $prod_name = $_POST['prod_name'];
     $prod_desc = $_POST['prod_desc'];
     $prod_spec = $_POST['prod_spec'];
@@ -39,16 +40,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
             // Use stored procedure to insert product
-            $stmt = $conn->prepare("CALL populatePRODUCTS('CREATE', 0, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("CALL populatePRODUCTS('CREATE', NULL, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param(
                 "iisssdis",
-                $category_id, $supplier_id, $prod_name, $prod_desc, $prod_spec, $price, $qty, $image
+                $category_id,
+                $supplier_id,
+                $prod_name,
+                $prod_desc,
+                $prod_spec,
+                $price,
+                $qty,
+                $image
             );
 
             if ($stmt->execute()) {
+                echo "<!-- Debug: Statement executed successfully -->";
                 echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
-                echo "<script>Swal.fire({icon: 'success', title: 'Success', text: 'Product added successfully!', timer: 2000, showConfirmButton: false}).then(()=>{window.location.href='Admin_product.php';});</script>";
+                echo "<script>
+                window.onload = function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Product added successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(()=>{window.location.href='Admin_product.php';});
+                };
+                </script>";
             } else {
+                echo "<!-- Debug: Statement failed: " . $stmt->error . " -->";
                 echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
                 echo "<script>Swal.fire({icon: 'error', title: 'Error', text: 'Error: " . $stmt->error . "'});</script>";
             }

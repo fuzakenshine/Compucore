@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 11, 2025 at 06:30 AM
+-- Generation Time: May 15, 2025 at 10:03 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -25,122 +25,107 @@ DELIMITER $$
 --
 -- Procedures
 --
-CREATE DEFINER=`` PROCEDURE `ORDER_APPROVAL` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_status` VARCHAR(50))   BEGIN
-    IF action = 'READ' THEN
-        SELECT * FROM order_approval WHERE PK_APPROVAL_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE order_approval SET STATUS = p_status WHERE PK_APPROVAL_ID = p_id;
-    END IF;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `populateCUSTOMERS` (IN `p_first_name` VARCHAR(50), IN `p_last_name` VARCHAR(50), IN `p_email` VARCHAR(100), IN `p_password_hash` VARCHAR(255), IN `p_customer_address` TEXT, IN `p_phone_num` VARCHAR(20))   BEGIN
+    INSERT INTO CUSTOMER (
+        F_NAME, 
+        L_NAME, 
+        EMAIL, 
+        PASSWORD_HASH, 
+        CUSTOMER_ADDRESS, 
+        PHONE_NUM, 
+        UPDATE_AT
+    ) 
+    VALUES (
+        p_first_name,
+        p_last_name,
+        p_email,
+        p_password_hash,
+        p_customer_address,
+        p_phone_num,
+        NOW()
+    );
 END$$
 
-CREATE DEFINER=`` PROCEDURE `populateCATEGORIES` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_name` VARCHAR(100))   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO categories (CATEGORY_NAME) VALUES (p_name);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM categories WHERE PK_CATEGORY_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE categories SET CATEGORY_NAME = p_name WHERE PK_CATEGORY_ID = p_id;
-    END IF;
-END$$
-
-CREATE DEFINER=`` PROCEDURE `populateCustomers` (IN `p_fname` VARCHAR(100), IN `p_lname` VARCHAR(100), IN `p_email` VARCHAR(255), IN `p_password_hash` VARCHAR(255), IN `p_address` VARCHAR(255), IN `p_phone_num` VARCHAR(15))   BEGIN
-    INSERT INTO customer (F_NAME, L_NAME, EMAIL, PASSWORD_HASH, CUSTOMER_ADDRESS, PHONE_NUM, UPDATE_AT)
-    VALUES (p_fname, p_lname, p_email, p_password_hash, p_address, p_phone_num, NOW());
-END$$
-
-CREATE DEFINER=`` PROCEDURE `populateORDERDETAILS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_order_id` INT, IN `p_product_id` INT, IN `p_quantity` INT)   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO order_details (ORDER_ID, PRODUCT_ID, QUANTITY) VALUES (p_order_id, p_product_id, p_quantity);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM order_details WHERE PK_ORDER_DETAIL_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE order_details SET ORDER_ID = p_order_id, PRODUCT_ID = p_product_id, QUANTITY = p_quantity WHERE PK_ORDER_DETAIL_ID = p_id;
-    END IF;
-END$$
-
-CREATE DEFINER=`` PROCEDURE `populateORDERS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_customer_id` INT, IN `p_order_date` DATETIME)   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO orders (CUSTOMER_ID, ORDER_DATE) VALUES (p_customer_id, p_order_date);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM orders WHERE PK_ORDER_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE orders SET CUSTOMER_ID = p_customer_id, ORDER_DATE = p_order_date WHERE PK_ORDER_ID = p_id;
-    END IF;
-END$$
-
-CREATE DEFINER=`` PROCEDURE `populatePAYMENTS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_order_id` INT, IN `p_amount` DECIMAL(10,2))   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO payments (ORDER_ID, AMOUNT) VALUES (p_order_id, p_amount);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM payments WHERE PK_PAYMENT_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE payments SET ORDER_ID = p_order_id, AMOUNT = p_amount WHERE PK_PAYMENT_ID = p_id;
-    END IF;
-END$$
-
-CREATE DEFINER=`` PROCEDURE `populatePRODUCTS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_category_id` INT, IN `p_supplier_id` INT, IN `p_name` VARCHAR(255), IN `p_desc` VARCHAR(255), IN `p_specs` TEXT, IN `p_price` DECIMAL(10,2), IN `p_qty` INT, IN `p_image` VARCHAR(255))   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO PRODUCTS (
-            FK1_CATEGORY_ID, FK2_SUPPLIER_ID, PROD_NAME, PROD_DESC, PROD_SPECS, PRICE, QTY, IMAGE, UPDATED_AT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `populatePRODUCTS` (IN `p_operation` VARCHAR(10), IN `p_product_id` INT, IN `p_category_id` INT, IN `p_supplier_id` INT, IN `p_prod_name` VARCHAR(255), IN `p_prod_desc` TEXT, IN `p_prod_specs` TEXT, IN `p_price` DECIMAL(10,2), IN `p_qty` INT, IN `p_image` VARCHAR(255))   BEGIN
+    -- For CREATE operation
+    IF p_operation = 'CREATE' THEN
+        INSERT INTO products (
+            FK1_CATEGORY_ID,
+            FK2_SUPPLIER_ID,
+            PROD_NAME,
+            PROD_DESC,
+            PROD_SPECS,
+            PRICE,
+            QTY,
+            IMAGE,
+            CREATED_AT,
+            UPDATED_AT
         ) VALUES (
-            p_category_id, p_supplier_id, p_name, p_desc, p_specs, p_price, p_qty, p_image, NOW()
+            p_category_id,
+            p_supplier_id,
+            p_prod_name,
+            p_prod_desc,
+            p_prod_specs,
+            p_price,
+            p_qty,
+            p_image,
+            NOW(),
+            NOW()
         );
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM PRODUCTS WHERE PK_PRODUCT_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE PRODUCTS
+    ELSEIF p_operation = 'READ' THEN
+        SELECT * FROM products WHERE PK_PRODUCT_ID = p_product_id;
+    ELSEIF p_operation = 'UPDATE' THEN
+        UPDATE products
         SET
             FK1_CATEGORY_ID = p_category_id,
             FK2_SUPPLIER_ID = p_supplier_id,
-            PROD_NAME = p_name,
-            PROD_DESC = p_desc,
-            PROD_SPECS = p_specs,
+            PROD_NAME = p_prod_name,
+            PROD_DESC = p_prod_desc,
+            PROD_SPECS = p_prod_specs,
             PRICE = p_price,
             QTY = p_qty,
             IMAGE = p_image,
             UPDATED_AT = NOW()
-        WHERE PK_PRODUCT_ID = p_id;
-    ELSEIF action = 'DELETE' THEN
-        DELETE FROM PRODUCTS WHERE PK_PRODUCT_ID = p_id;
+        WHERE PK_PRODUCT_ID = p_product_id;
+    ELSEIF p_operation = 'DELETE' THEN
+        DELETE FROM products WHERE PK_PRODUCT_ID = p_product_id;
     END IF;
 END$$
 
-CREATE DEFINER=`` PROCEDURE `populateREVIEWS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_user_id` INT, IN `p_product_id` INT, IN `p_review` TEXT)   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO reviews (USER_ID, PRODUCT_ID, REVIEW) VALUES (p_user_id, p_product_id, p_review);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM reviews WHERE PK_REVIEW_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE reviews SET USER_ID = p_user_id, PRODUCT_ID = p_product_id, REVIEW = p_review WHERE PK_REVIEW_ID = p_id;
-    END IF;
-END$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `populateSUPPLIER` (IN `p_FK_USER_ID` INT, IN `p_S_FNAME` VARCHAR(50), IN `p_S_LNAME` VARCHAR(50), IN `p_PHONE_NUM` VARCHAR(15), IN `p_COMPANY_NAME` VARCHAR(100), IN `p_EMAIL` VARCHAR(100), IN `p_SUPPLIER_ADDRESS` TEXT, IN `p_SUPPLIER_IMAGE` VARCHAR(255))   BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'An error occurred while inserting supplier data';
+    END;
 
-CREATE DEFINER=`` PROCEDURE `populateSUPPLIER` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_fname` VARCHAR(100), IN `p_lname` VARCHAR(100), IN `p_email` VARCHAR(100), IN `p_company` VARCHAR(100), IN `p_image` VARCHAR(255))   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO supplier (S_FNAME, S_LNAME, EMAIL, COMPANY_NAME, SUPPLIER_IMAGE, STATUS, CREATE_AT)
-        VALUES (p_fname, p_lname, p_email, p_company, p_image, 'Active', NOW());
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM supplier WHERE PK_SUPPLIER_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE supplier
-        SET S_FNAME = p_fname,
-            S_LNAME = p_lname,
-            EMAIL = p_email,
-            COMPANY_NAME = p_company,
-            SUPPLIER_IMAGE = p_image,
-            UPDATE_AT = NOW()
-        WHERE PK_SUPPLIER_ID = p_id;
-    END IF;
-END$$
+    START TRANSACTION;
 
-CREATE DEFINER=`` PROCEDURE `populateUSERS` (IN `action` VARCHAR(10), IN `p_id` INT, IN `p_fname` VARCHAR(100), IN `p_lname` VARCHAR(100), IN `p_email` VARCHAR(100))   BEGIN
-    IF action = 'CREATE' THEN
-        INSERT INTO users (F_NAME, L_NAME, EMAIL) VALUES (p_fname, p_lname, p_email);
-    ELSEIF action = 'READ' THEN
-        SELECT * FROM users WHERE PK_USER_ID = p_id;
-    ELSEIF action = 'UPDATE' THEN
-        UPDATE users SET F_NAME = p_fname, L_NAME = p_lname, EMAIL = p_email WHERE PK_USER_ID = p_id;
-    END IF;
+    -- Insert the supplier data
+    INSERT INTO supplier (
+        FK_USER_ID,
+        S_FNAME,
+        S_LNAME,
+        PHONE_NUM,
+        COMPANY_NAME,
+        EMAIL,
+        SUPPLIER_ADDRESS,
+        SUPPLIER_IMAGE,
+        UPDATE_AT
+    ) VALUES (
+        p_FK_USER_ID,
+        p_S_FNAME,
+        p_S_LNAME,
+        p_PHONE_NUM,
+        p_COMPANY_NAME,
+        p_EMAIL,
+        p_SUPPLIER_ADDRESS,
+        p_SUPPLIER_IMAGE,
+        NOW()
+    );
+
+    COMMIT;
 END$$
 
 DELIMITER ;
@@ -190,6 +175,7 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`cart_id`, `product_id`, `product_name`, `product_price`, `quantity`, `customer_id`, `created_at`) VALUES
+(0, 48, 'TenZ Signature Edition', 18500.00, 2, 0, '2025-05-15 20:03:05'),
 (30, 38, 'A4TECH BLACK MOUSE', 1000.00, 2, 4, '2025-04-26 09:36:27'),
 (45, 23, 'HyperX RAM 16GB', 3000.00, 1, 5, '2025-05-02 17:35:36'),
 (48, 39, 'MSI Router', 3000.00, 1, 2, '2025-05-03 08:04:02'),
@@ -264,6 +250,7 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`PK_CUSTOMER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`, `CUSTOMER_ADDRESS`, `PHONE_NUM`, `CREATED_AT`, `UPDATE_AT`, `PROFILE_PIC`) VALUES
+(0, 'Doe', 'Jane', 'doe@gmail.com', '$2y$10$YcGi16FVvwmFI2RlLWQY4ONUX3KFHTzlVpVXm/nGQ/AzEP3MeOuRO', 'Cebu', '+6309235467831', '2025-05-16 02:48:31', '2025-05-16 02:48:31', 'default.png'),
 (1, '', '', '', '$2y$10$lvIdywOwKO9s0elw8Rx36e/ymyBKustce1nXvEre89nohEIts3qyi', '', '', '2025-04-16 22:33:19', '2025-05-03 18:15:44', '6815ecd03fc3c.jpg'),
 (2, 'CowMeRun', 'Damiaru', 'CowMeRun@gmail.com', '$2y$10$N3S5KrSGqM3wpY1PLZmZ8.OSpdaCHP5PalBldxYxhhJ02a6nGqI06', 'Taga VRAMA ko', '0912345678', '2025-04-18 02:17:00', '2025-05-03 16:46:27', '6815d136de0fa.png'),
 (3, 'TINGA', 'JOHNRAY', 'jttinga@email.com', '$2y$10$NkiHMi4wFPMBGIOkH8S.IOQQUJx90YcjjjaTatavgkeCQ6iMrUP36', 'Villa remedios unit 3A', '09991029087', '2025-04-26 16:10:54', '2025-04-26 16:10:54', 'default.png'),
@@ -298,6 +285,7 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`PK_NOTIFICATION_ID`, `FK_CUSTOMER_ID`, `MESSAGE`, `TYPE`, `STATUS`, `CREATED_AT`) VALUES
+(0, 0, 'Your order for TenZ Signature Edition has been placed and is awaiting approval.', 'order', 'read', '2025-05-16 03:50:52'),
 (1, 5, 'Your order #14 has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:14:50'),
 (2, 5, 'Your order #8 has been approved and is being processed.', 'order', 'read', '2025-05-03 01:17:33'),
 (3, 5, 'Your order #15 has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:19:05'),
@@ -615,7 +603,9 @@ INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `
 (39, 26, 4, 'MSI Router', 'Good for any WIFI', '-FAST ', 3000.00, 5, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-26 02:57:19', '2025-05-04 02:55:09'),
 (41, 1, 2, 'Asus monitor', 'monitorr', '-black\r\n-red', 5000.00, 19, 'ebb4e37b-74b6-41b8-9719-7b565bec97f5.jpg', '2025-05-10 16:07:21', '2025-05-10 16:07:21'),
 (42, 3, 3, 'T-FORCE VULCANZ', 'gaming', 'gaming\r\nblack\r\npaste', 3000.00, 10, '62f7d253-ba88-434e-9ec8-f2d581fb5316.jpg', '2025-05-10 16:10:07', '2025-05-10 16:10:07'),
-(44, 21, 2, 'Gaming Pc', 'sadsadsaddsada', 'sdsadsadsaa', 20000.00, 0, 'Der Actina Gaming-PC 5901443414643 ist eine….jpg', '2025-05-10 16:43:46', '2025-05-10 16:43:46');
+(44, 21, 2, 'Gaming Pc', 'sadsadsaddsada', 'sdsadsadsaa', 20000.00, 0, 'Der Actina Gaming-PC 5901443414643 ist eine….jpg', '2025-05-10 16:43:46', '2025-05-10 16:43:46'),
+(46, 1, 0, 'Samsung Odyssey Neo G9', 'The Samsung Odyssey Neo 57 G9 stretches is an absolute beast at 57 inches, and with the size comes a DUHD resolution of 7680 x 2160. The VA panel with Mini LED ', 'Dual UHD\r\n1000R Curved screen\r\nQuantum Matrix Technology\r\n240Hz Refresh rate', 55000.00, 16, 'ph-odyssey-neo-g9-g95nc-ls57cg952nexxp-546001253.webp', '2025-05-16 03:31:26', '2025-05-16 03:31:26'),
+(48, 14, 0, 'TenZ Signature Edition', 'Designed and shaped by TenZ himself, this mouse delivers elite performance with cutting-edge technology built for his playstyle. Tyson \"TenZ\" Ngo—a world-renowned ex-esports PRO, streamer, and VCT 2021 Masters Reykjavik MVP—is known for his exceptional ai', 'Dimension\r\nLength: 4.72in (120mm)\r\nWidth: 2.52in (64mm)\r\nHeight: 1.59in (40.5mm)\r\nWeight: ±47g (1.66oz)', 18500.00, 13, 'PulsarTenZsignatureeditionwirelessGamingMouse_01_large.webp', '2025-05-16 03:37:51', '2025-05-16 03:37:51');
 
 -- --------------------------------------------------------
 
@@ -679,7 +669,8 @@ INSERT INTO `supplier` (`PK_SUPPLIER_ID`, `FK_USER_ID`, `S_LNAME`, `S_FNAME`, `P
 (2, 0, 'Caumeran', 'Damien', '+987644123', 'Cow Me Run ', 'damskie@gmail.com', 'V.rama', 'ASDASDSDASA.jpg', '2025-04-26 02:22:20', '2025-04-26 02:22:20', 'Active'),
 (3, 0, 'Dagupols', 'Client', '+56892134', 'Try me hack', 'Client@gmai.com', 'Buhisan', '6815bc100aa9e.jpg', '2025-04-26 02:23:42', '2025-04-26 02:23:42', 'Active'),
 (4, 0, 'Ancero', 'John Rey', '+565723257', 'JAHH Corp.', 'gwapokoancero123@gmail.com', 'B.rod', '6815bc070d4c6.jpg', '2025-04-26 02:25:00', '2025-04-26 02:25:00', 'Active'),
-(6, 1, 'Lahaylahay', 'Bevs', '092445678009', 'COMPUSPEC', 'bevs@1.com', 'CEBU', '467743265_2034794076942966_7629118095982581341_n.jpg', '2025-05-10 17:17:20', '2025-05-10 17:17:20', 'Active');
+(6, 1, 'Lahaylahay', 'Bevs', '092445678009', 'COMPUSPEC', 'bevs@1.com', 'CEBU', '467743265_2034794076942966_7629118095982581341_n.jpg', '2025-05-10 17:17:20', '2025-05-10 17:17:20', 'Active'),
+(0, 1, 'Pork', 'John', '0932145632146', 'J Pork Techs', 'johnpork@gmail.com', 'Cebu', 'd23687188aabd01cf01a9fc4e5cafd22.webp', '2025-05-16 02:54:19', '2025-05-16 02:54:19', 'Active');
 
 -- --------------------------------------------------------
 
@@ -779,117 +770,20 @@ ALTER TABLE `products`
   ADD KEY `FK2_SUPPLIER_ID` (`FK2_SUPPLIER_ID`);
 
 --
--- Indexes for table `reviews`
---
-ALTER TABLE `reviews`
-  ADD PRIMARY KEY (`PK_REVIEW_ID`),
-  ADD KEY `FK1_CUSTOMER_ID` (`FK1_CUSTOMER_ID`),
-  ADD KEY `FK2_PRODUCT_ID` (`FK2_PRODUCT_ID`),
-  ADD KEY `FK3_ORDER_ID` (`FK3_ORDER_ID`);
-
---
--- Indexes for table `supplier`
---
-ALTER TABLE `supplier`
-  ADD PRIMARY KEY (`PK_SUPPLIER_ID`),
-  ADD KEY `FK_USER_ID` (`FK_USER_ID`);
-
---
--- Indexes for table `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`PK_USER_ID`),
-  ADD UNIQUE KEY `EMAIL` (`EMAIL`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
-
---
--- AUTO_INCREMENT for table `admin`
---
-ALTER TABLE `admin`
-  MODIFY `PK_ADMIN_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `cart`
---
-ALTER TABLE `cart`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
-
---
--- AUTO_INCREMENT for table `customer`
---
-ALTER TABLE `customer`
-  MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
-
---
--- AUTO_INCREMENT for table `notifications`
---
-ALTER TABLE `notifications`
-  MODIFY `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
-
---
--- AUTO_INCREMENT for table `order_detail`
---
-ALTER TABLE `order_detail`
-  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
-
---
--- AUTO_INCREMENT for table `reviews`
---
-ALTER TABLE `reviews`
-  MODIFY `PK_REVIEW_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `supplier`
---
-ALTER TABLE `supplier`
-  MODIFY `PK_SUPPLIER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `cart`
---
-ALTER TABLE `cart`
-  ADD CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`PK_PRODUCT_ID`),
-  ADD CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`PK_CUSTOMER_ID`);
-
---
--- Constraints for table `notifications`
---
-ALTER TABLE `notifications`
-  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`FK_CUSTOMER_ID`) REFERENCES `customer` (`PK_CUSTOMER_ID`) ON DELETE CASCADE;
-
---
--- Constraints for table `orders`
---
-ALTER TABLE `orders`
-  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`FK1_CUSTOMER_ID`) REFERENCES `customer` (`PK_CUSTOMER_ID`),
-  ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`FK2_PAYMENT_ID`) REFERENCES `payments` (`PK_PAYMENT_ID`),
-  ADD CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`FK3_USER_ID`) REFERENCES `users` (`PK_USER_ID`);
-
---
--- Constraints for table `products`
---
-ALTER TABLE `products`
-  ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`FK1_CATEGORY_ID`) REFERENCES `categories` (`PK_CATEGORY_ID`),
-  ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`FK2_SUPPLIER_ID`) REFERENCES `supplier` (`PK_SUPPLIER_ID`) ON DELETE CASCADE;
+  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
