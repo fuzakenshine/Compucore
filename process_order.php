@@ -60,13 +60,15 @@ try {
     }
     $total += $shipping_cost;
 
-    // Insert order
-    $order_sql = "INSERT INTO orders (FK1_CUSTOMER_ID, TOTAL_PRICE, FK2_PAYMENT_ID, STATUS, ORDER_DATE) 
-                  VALUES (?, ?, ?, 'Pending', NOW())";
-    $stmt = $conn->prepare($order_sql);
-    $stmt->bind_param("ids", $user_id, $total, $payment_method);
+    // Insert order using stored procedure
+    $stmt = $conn->prepare("CALL populateORDERS(?, ?, ?)");
+    $stmt->bind_param("idi", $user_id, $total, $payment_method);
     $stmt->execute();
-    $order_id = $conn->insert_id;
+    $result = $stmt->get_result();
+    $order_row = $result->fetch_assoc();
+    $order_id = $order_row['order_id'];
+    $stmt->close();
+    $conn->next_result(); // Clear results for next queries
 
     // Create notification for the order
     $notification_sql = "INSERT INTO notifications (FK_CUSTOMER_ID, MESSAGE, TYPE) 
@@ -78,13 +80,14 @@ try {
     $stmt->execute();
 
     // Insert order items
-    $order_item_sql = "INSERT INTO order_detail (FK2_ORDER_ID, FK1_PRODUCT_ID, QTY, PRICE) VALUES (?, ?, ?, ?)";
-    $stmt = $conn->prepare($order_item_sql);
+    $stmt = $conn->prepare("CALL populateORDERDETAILS(?, ?, ?, ?)");
     
     foreach($cart_items as $item) {
         $stmt->bind_param("iiid", $order_id, $item['product_id'], $item['quantity'], $item['product_price']);
         $stmt->execute();
     }
+    $stmt->close();
+    $conn->next_result(); // Clear results for next queries
 
     // Clear cart items
     if (isset($_GET['selected_items'])) {

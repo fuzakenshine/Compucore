@@ -94,6 +94,10 @@ $customer = $customer_stmt->get_result()->fetch_assoc();
             background: #fff3e0;
             color: #ef6c00;
         }
+        .order-header .status.completed {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
         .order-info {
             display: flex;
             justify-content: space-between;
@@ -491,6 +495,7 @@ $customer = $customer_stmt->get_result()->fetch_assoc();
                                    LEFT JOIN reviews r ON r.FK3_ORDER_ID = o.PK_ORDER_ID 
                                        AND r.FK1_CUSTOMER_ID = ? 
                                        AND r.FK2_PRODUCT_ID = p.PK_PRODUCT_ID
+                                       AND r.FK3_ORDER_ID = o.PK_ORDER_ID
                                    WHERE od.FK2_ORDER_ID = ?
                                    ORDER BY s.COMPANY_NAME, p.PROD_NAME";
                         $item_stmt = $conn->prepare($item_sql);

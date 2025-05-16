@@ -52,12 +52,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         $image = !empty($image_names) ? implode(',', $image_names) : null;
+        
         // Insert review with image
-        $insert_review_sql = "INSERT INTO REVIEWS (FK1_CUSTOMER_ID, FK2_PRODUCT_ID, RATING, COMMENT, IMAGE, CREATED_AT) 
-                             VALUES (?, ?, ?, ?, ?, NOW())";
+        $insert_review_sql = "INSERT INTO REVIEWS (FK1_CUSTOMER_ID, FK2_PRODUCT_ID, FK3_ORDER_ID, RATING, COMMENT, IMAGE, CREATED_AT) 
+                             VALUES (?, ?, ?, ?, ?, ?, NOW())";
         $insert_stmt = $conn->prepare($insert_review_sql);
-        $insert_stmt->bind_param("iiiss", $customer_id, $product_id, $rating, $comment, $image);
+        $insert_stmt->bind_param("iiisss", $customer_id, $product_id, $order_id, $rating, $comment, $image);
         $insert_stmt->execute();
+        
+        // Check if all products in the order have been reviewed by this customer
+        // 1. Count total products in the order
+        $sql_total = "SELECT COUNT(*) as total FROM order_detail WHERE FK2_ORDER_ID = ?";
+        $stmt_total = $conn->prepare($sql_total);
+        $stmt_total->bind_param("i", $order_id);
+        $stmt_total->execute();
+        $result_total = $stmt_total->get_result()->fetch_assoc();
+        $total_products = $result_total['total'];
+
+        // 2. Count reviewed products in the order by this customer
+        $sql_reviewed = "SELECT COUNT(*) as reviewed FROM reviews WHERE FK3_ORDER_ID = ? AND FK1_CUSTOMER_ID = ?";
+        $stmt_reviewed = $conn->prepare($sql_reviewed);
+        $stmt_reviewed->bind_param("ii", $order_id, $customer_id);
+        $stmt_reviewed->execute();
+        $result_reviewed = $stmt_reviewed->get_result()->fetch_assoc();
+        $reviewed_products = $result_reviewed['reviewed'];
+
+        // 3. If all products are reviewed, update order status to 'Completed'
+        if ($total_products == $reviewed_products) {
+            $sql_update = "UPDATE orders SET STATUS = 'Completed' WHERE PK_ORDER_ID = ?";
+            $stmt_update = $conn->prepare($sql_update);
+            $stmt_update->bind_param("i", $order_id);
+            $stmt_update->execute();
+        }
         
         $conn->commit();
         header("Location: viewdetail.php?product_id=$product_id&message=Review submitted successfully");

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 15, 2025 at 10:03 PM
+-- Generation Time: May 16, 2025 at 06:57 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,6 +44,28 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `populateCUSTOMERS` (IN `p_first_nam
         p_phone_num,
         NOW()
     );
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `populateORDERDETAILS` (IN `p_order_id` INT, IN `p_product_id` INT, IN `p_qty` INT, IN `p_price` DECIMAL(10,2))   BEGIN
+    INSERT INTO order_detail (FK2_ORDER_ID, FK1_PRODUCT_ID, QTY, PRICE) 
+    VALUES (p_order_id, p_product_id, p_qty, p_price);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `populateORDERS` (IN `p_customer_id` INT, IN `p_total_price` DECIMAL(10,2), IN `p_payment_id` INT)   BEGIN
+    INSERT INTO orders (
+        FK1_CUSTOMER_ID,
+        TOTAL_PRICE,
+        FK2_PAYMENT_ID,
+        STATUS,
+        ORDER_DATE
+    ) VALUES (
+        p_customer_id,
+        p_total_price,
+        p_payment_id,
+        'Pending',
+        NOW()
+    );
+    SELECT LAST_INSERT_ID() AS order_id;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `populatePRODUCTS` (IN `p_operation` VARCHAR(10), IN `p_product_id` INT, IN `p_category_id` INT, IN `p_supplier_id` INT, IN `p_prod_name` VARCHAR(255), IN `p_prod_desc` TEXT, IN `p_prod_specs` TEXT, IN `p_price` DECIMAL(10,2), IN `p_qty` INT, IN `p_image` VARCHAR(255))   BEGIN
@@ -175,11 +197,12 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`cart_id`, `product_id`, `product_name`, `product_price`, `quantity`, `customer_id`, `created_at`) VALUES
-(0, 48, 'TenZ Signature Edition', 18500.00, 2, 0, '2025-05-15 20:03:05'),
+(1, 48, 'TenZ Signature Edition', 18500.00, 2, 0, '2025-05-15 20:03:05'),
 (30, 38, 'A4TECH BLACK MOUSE', 1000.00, 2, 4, '2025-04-26 09:36:27'),
 (45, 23, 'HyperX RAM 16GB', 3000.00, 1, 5, '2025-05-02 17:35:36'),
 (48, 39, 'MSI Router', 3000.00, 1, 2, '2025-05-03 08:04:02'),
-(49, 38, 'A4TECH BLACK MOUSE', 1000.00, 1, 2, '2025-05-03 08:04:29');
+(49, 38, 'A4TECH BLACK MOUSE', 1000.00, 1, 2, '2025-05-03 08:04:29'),
+(55, 48, 'TenZ Signature Edition', 18500.00, 1, 27, '2025-05-16 04:03:32');
 
 -- --------------------------------------------------------
 
@@ -250,8 +273,6 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`PK_CUSTOMER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`, `CUSTOMER_ADDRESS`, `PHONE_NUM`, `CREATED_AT`, `UPDATE_AT`, `PROFILE_PIC`) VALUES
-(0, 'Doe', 'Jane', 'doe@gmail.com', '$2y$10$YcGi16FVvwmFI2RlLWQY4ONUX3KFHTzlVpVXm/nGQ/AzEP3MeOuRO', 'Cebu', '+6309235467831', '2025-05-16 02:48:31', '2025-05-16 02:48:31', 'default.png'),
-(1, '', '', '', '$2y$10$lvIdywOwKO9s0elw8Rx36e/ymyBKustce1nXvEre89nohEIts3qyi', '', '', '2025-04-16 22:33:19', '2025-05-03 18:15:44', '6815ecd03fc3c.jpg'),
 (2, 'CowMeRun', 'Damiaru', 'CowMeRun@gmail.com', '$2y$10$N3S5KrSGqM3wpY1PLZmZ8.OSpdaCHP5PalBldxYxhhJ02a6nGqI06', 'Taga VRAMA ko', '0912345678', '2025-04-18 02:17:00', '2025-05-03 16:46:27', '6815d136de0fa.png'),
 (3, 'TINGA', 'JOHNRAY', 'jttinga@email.com', '$2y$10$NkiHMi4wFPMBGIOkH8S.IOQQUJx90YcjjjaTatavgkeCQ6iMrUP36', 'Villa remedios unit 3A', '09991029087', '2025-04-26 16:10:54', '2025-04-26 16:10:54', 'default.png'),
 (4, 'test', '567890-', '67890@1', '$2y$10$GzTEh3vpAb5B1tnEFnonaeBt6ujCvoao3YO9Z7aG.E3yzQ1yCgrcK', '123', 'rewq', '2025-04-26 17:35:08', '2025-04-26 17:35:08', 'default.png'),
@@ -263,7 +284,8 @@ INSERT INTO `customer` (`PK_CUSTOMER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD
 (10, 'DOE', 'JAN', 'jando@gmail.com', '$2y$10$Jrpa1KsAYQx2DKRI34CqE.5CRsWcB00uJl1sarKse.8.0L3ewAi8u', 'San Isidro', '+12345678990088', '2025-05-06 18:44:05', '2025-05-06 18:44:05', 'default.png'),
 (24, 'four', 'Testg', 'testfour@gmail.com', '$2y$10$WXNxlFC.NJgVnzOHkn/PmuYc52eKuMV1/Gq7JHYZsK99dbWAJNtRW', 'Oprra Kalunasan', '+63123466879', '2025-05-09 17:07:42', '2025-05-10 00:52:38', 'default.png'),
 (25, 'Bustillo', 'Jarom', 'jarom@gmail.com', '$2y$10$.R5OMJFfNxbQb2.QaEkDS.eHd9Fl9pHXv29ILyiP2dE.UIhgjJtMW', 'California', '+6309123456789', '2025-05-10 16:55:09', '2025-05-10 16:55:09', 'default.png'),
-(26, 'Lahaylahay', 'Bevs', 'b@gmail.com', '$2y$10$7ENpABtkXCBp/CcwEnHWEOqbZm5wOJtYSJnZ7G6I4q4qHD3ODuJb.', 'CEBU', '+639234560987', '2025-05-10 17:21:07', '2025-05-10 17:21:07', 'default.png');
+(26, 'Lahaylahay', 'Bevs', 'b@gmail.com', '$2y$10$7ENpABtkXCBp/CcwEnHWEOqbZm5wOJtYSJnZ7G6I4q4qHD3ODuJb.', 'CEBU', '+639234560987', '2025-05-10 17:21:07', '2025-05-10 17:21:07', 'default.png'),
+(27, 'Doe', 'Jane', 'doe@gmail.com', '$2y$10$sLevqSrDcQuKTcQ0bfiR6eko9XJkwCxxPFdljkgjiCAWZQ35en.ey', 'CEBu', '+63096512387431', '2025-05-16 11:37:12', '2025-05-16 11:37:12', 'default.png');
 
 -- --------------------------------------------------------
 
@@ -285,7 +307,6 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`PK_NOTIFICATION_ID`, `FK_CUSTOMER_ID`, `MESSAGE`, `TYPE`, `STATUS`, `CREATED_AT`) VALUES
-(0, 0, 'Your order for TenZ Signature Edition has been placed and is awaiting approval.', 'order', 'read', '2025-05-16 03:50:52'),
 (1, 5, 'Your order #14 has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:14:50'),
 (2, 5, 'Your order #8 has been approved and is being processed.', 'order', 'read', '2025-05-03 01:17:33'),
 (3, 5, 'Your order #15 has been placed and is awaiting approval.', 'order', 'read', '2025-05-03 01:19:05'),
@@ -392,7 +413,16 @@ INSERT INTO `notifications` (`PK_NOTIFICATION_ID`, `FK_CUSTOMER_ID`, `MESSAGE`, 
 (107, 26, 'Your order for AN Keyboard MC Blue switch, ELFKS DROID CASING has been placed and is awaiting approval.', 'order', 'unread', '2025-05-10 17:25:54'),
 (108, 26, 'Your order for AN Keyboard MC Blue switch, ELFKS DROID CASING has been approved and is being processed.', 'order', 'read', '2025-05-10 17:26:26'),
 (109, 25, 'Your order for Asus monitor, The Great Wave of Kanagawa Mousepad has been placed and is awaiting approval.', 'order', 'unread', '2025-05-10 17:32:52'),
-(110, 25, 'Your order for Asus monitor, The Great Wave of Kanagawa Mousepad has been approved and is being processed.', 'order', 'unread', '2025-05-10 17:33:02');
+(110, 25, 'Your order for Asus monitor, The Great Wave of Kanagawa Mousepad has been approved and is being processed.', 'order', 'unread', '2025-05-10 17:33:02'),
+(111, 27, 'Your order for TenZ Signature Edition has been placed and is awaiting approval.', 'order', 'read', '2025-05-16 11:37:41'),
+(112, 27, 'Your order for [Pro Series] PRX Something Gaming Mousepad has been placed and is awaiting approval.', 'order', 'read', '2025-05-16 12:07:09'),
+(113, 27, 'Your order for [Pro Series] PRX Something Gaming Mousepad has been placed and is awaiting approval.', 'order', 'read', '2025-05-16 12:12:54'),
+(114, 27, 'Your order for Asus monitor has been placed and is awaiting approval.', 'order', 'unread', '2025-05-16 12:17:17'),
+(115, 27, 'Your order for [Pro Series] PRX Something Gaming Mousepad has been approved and is being processed.', 'order', 'unread', '2025-05-16 12:39:43'),
+(116, 27, 'Your order for TenZ Signature Edition has been approved and is being processed.', 'order', 'unread', '2025-05-16 12:44:42'),
+(117, 27, 'Your order for Asus monitor has been approved and is being processed.', 'order', 'unread', '2025-05-16 12:47:31'),
+(118, 27, 'Your order for MSI Router has been placed and is awaiting approval.', 'order', 'unread', '2025-05-16 12:56:36'),
+(119, 27, 'Your order for MSI Router has been approved and is being processed.', 'order', 'unread', '2025-05-16 12:56:44');
 
 -- --------------------------------------------------------
 
@@ -409,7 +439,7 @@ CREATE TABLE `orders` (
   `ORDER_DATE` datetime NOT NULL DEFAULT current_timestamp(),
   `LINE_TOTAL` decimal(10,2) NOT NULL,
   `UPDATE_DATE` datetime DEFAULT NULL,
-  `STATUS` enum('Pending','Approved','Rejected') DEFAULT 'Pending'
+  `STATUS` enum('Pending','Approved','Rejected','Completed') DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -455,7 +485,10 @@ INSERT INTO `orders` (`PK_ORDER_ID`, `FK1_CUSTOMER_ID`, `FK2_PAYMENT_ID`, `FK3_U
 (43, 25, 0, 0, 5000.00, '2025-05-10 16:56:58', 0.00, '2025-05-10 16:58:16', 'Rejected'),
 (44, 25, 0, 0, 200000.00, '2025-05-10 17:04:36', 0.00, '2025-05-10 17:05:13', 'Approved'),
 (45, 26, 0, 0, 12250.00, '2025-05-10 17:25:54', 0.00, '2025-05-10 17:26:26', 'Approved'),
-(46, 25, 0, 0, 6000.00, '2025-05-10 17:32:52', 0.00, '2025-05-10 17:33:02', 'Approved');
+(46, 25, 0, 0, 6000.00, '2025-05-10 17:32:52', 0.00, '2025-05-10 17:33:02', 'Approved'),
+(56, 27, 0, 0, 18500.00, '2025-05-16 11:37:41', 0.00, '2025-05-16 12:44:42', 'Completed'),
+(59, 27, 0, 0, 5250.00, '2025-05-16 12:17:17', 0.00, '2025-05-16 12:47:31', 'Completed'),
+(60, 27, 0, 0, 3000.00, '2025-05-16 12:56:36', 0.00, '2025-05-16 12:56:44', 'Completed');
 
 -- --------------------------------------------------------
 
@@ -521,7 +554,12 @@ INSERT INTO `order_detail` (`PK_ORDER_DETAIL_ID`, `FK1_PRODUCT_ID`, `FK2_ORDER_I
 (42, 32, 45, 1, 2000.00, '2025-05-10 17:25:54'),
 (43, 22, 45, 1, 10000.00, '2025-05-10 17:25:54'),
 (44, 41, 46, 1, 5000.00, '2025-05-10 17:32:52'),
-(45, 33, 46, 1, 1000.00, '2025-05-10 17:32:52');
+(45, 33, 46, 1, 1000.00, '2025-05-10 17:32:52'),
+(46, 48, 56, 1, 18500.00, '2025-05-16 11:37:41'),
+(47, 49, 0, 1, 5000.00, '2025-05-16 12:07:09'),
+(48, 49, 58, 1, 5000.00, '2025-05-16 12:12:54'),
+(49, 41, 59, 1, 5000.00, '2025-05-16 12:17:17'),
+(50, 39, 60, 1, 3000.00, '2025-05-16 12:56:36');
 
 --
 -- Triggers `order_detail`
@@ -554,7 +592,7 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`PK_PAYMENT_ID`, `PAYMENT_METHOD`) VALUES
-(0, 'cod');
+(1, 'cod');
 
 -- --------------------------------------------------------
 
@@ -600,12 +638,13 @@ INSERT INTO `products` (`PK_PRODUCT_ID`, `FK1_CATEGORY_ID`, `FK2_SUPPLIER_ID`, `
 (36, 8, 3, 'RGB Hard Glass Case', 'See through', '-Glass', 2000.00, 0, 'Custom build Gaming PC.jpg', '2025-04-26 02:54:53', '2025-04-26 02:54:53'),
 (37, 19, 1, 'Corsair coolant fan', 'Cold and Cool', '-White\r\n', 3000.00, 8, 'Corsair Dominator Platinum RGB Series.jpg', '2025-04-26 02:55:30', '2025-05-04 03:10:02'),
 (38, 14, 3, 'A4TECH BLACK MOUSE', 'Good for Valorant', '-black', 1000.00, 11, 'Amazon_com_ Dapesuom Small Mouse Pad 6 x 8 Inch….jpg', '2025-04-26 02:56:30', '2025-05-09 18:13:36'),
-(39, 26, 4, 'MSI Router', 'Good for any WIFI', '-FAST ', 3000.00, 5, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-26 02:57:19', '2025-05-04 02:55:09'),
-(41, 1, 2, 'Asus monitor', 'monitorr', '-black\r\n-red', 5000.00, 19, 'ebb4e37b-74b6-41b8-9719-7b565bec97f5.jpg', '2025-05-10 16:07:21', '2025-05-10 16:07:21'),
+(39, 26, 4, 'MSI Router', 'Good for any WIFI', '-FAST ', 3000.00, 4, '977dcc0b-90d6-4ee3-be12-05ac3f3d73be.jpg', '2025-04-26 02:57:19', '2025-05-04 02:55:09'),
+(41, 1, 2, 'Asus monitor', 'monitorr', '-black\r\n-red', 5000.00, 18, 'ebb4e37b-74b6-41b8-9719-7b565bec97f5.jpg', '2025-05-10 16:07:21', '2025-05-10 16:07:21'),
 (42, 3, 3, 'T-FORCE VULCANZ', 'gaming', 'gaming\r\nblack\r\npaste', 3000.00, 10, '62f7d253-ba88-434e-9ec8-f2d581fb5316.jpg', '2025-05-10 16:10:07', '2025-05-10 16:10:07'),
 (44, 21, 2, 'Gaming Pc', 'sadsadsaddsada', 'sdsadsadsaa', 20000.00, 0, 'Der Actina Gaming-PC 5901443414643 ist eine….jpg', '2025-05-10 16:43:46', '2025-05-10 16:43:46'),
-(46, 1, 0, 'Samsung Odyssey Neo G9', 'The Samsung Odyssey Neo 57 G9 stretches is an absolute beast at 57 inches, and with the size comes a DUHD resolution of 7680 x 2160. The VA panel with Mini LED ', 'Dual UHD\r\n1000R Curved screen\r\nQuantum Matrix Technology\r\n240Hz Refresh rate', 55000.00, 16, 'ph-odyssey-neo-g9-g95nc-ls57cg952nexxp-546001253.webp', '2025-05-16 03:31:26', '2025-05-16 03:31:26'),
-(48, 14, 0, 'TenZ Signature Edition', 'Designed and shaped by TenZ himself, this mouse delivers elite performance with cutting-edge technology built for his playstyle. Tyson \"TenZ\" Ngo—a world-renowned ex-esports PRO, streamer, and VCT 2021 Masters Reykjavik MVP—is known for his exceptional ai', 'Dimension\r\nLength: 4.72in (120mm)\r\nWidth: 2.52in (64mm)\r\nHeight: 1.59in (40.5mm)\r\nWeight: ±47g (1.66oz)', 18500.00, 13, 'PulsarTenZsignatureeditionwirelessGamingMouse_01_large.webp', '2025-05-16 03:37:51', '2025-05-16 03:37:51');
+(46, 1, 7, 'Samsung Odyssey Neo G9', 'The Samsung Odyssey Neo 57 G9 stretches is an absolute beast at 57 inches, and with the size comes a DUHD resolution of 7680 x 2160. The VA panel with Mini LED ', 'Dual UHD\\r\\n1000R Curved screen\\r\\nQuantum Matrix Technology\\r\\n240Hz Refresh rate', 55000.00, 16, 'ph-odyssey-neo-g9-g95nc-ls57cg952nexxp-546001253.webp', '2025-05-16 03:31:26', '2025-05-16 12:04:23'),
+(48, 14, 7, 'TenZ Signature Edition', 'Designed and shaped by TenZ himself, this mouse delivers elite performance with cutting-edge technology built for his playstyle. Tyson \\\"TenZ\\\" Ngo—a world-renowned ex-esports PRO, streamer, and VCT 2021 Masters Reykjavik MVP—is known for his exceptional ', 'Dimension\\r\\nLength: 4.72in (120mm)\\r\\nWidth: 2.52in (64mm)\\r\\nHeight: 1.59in (40.5mm)\\r\\nWeight: ±47g (1.66oz)', 18500.00, 14, 'PulsarTenZsignatureeditionwirelessGamingMouse_01_large.webp', '2025-05-16 03:37:51', '2025-05-16 11:43:09'),
+(49, 26, 12, '[Pro Series] PRX Something Gaming Mousepad', 'Collaborating closely with the Pulsar R&D Team, the Paper Rex Art Department, and Ilia \"Something,\" we developed a new surface tailored specifically to his high-sensitivity gameplay needs. The ultra-finely and evenly knitted texture delivers a silky-smoot', 'Speed: ▶︎▶︎▷▷▷▷ Low\r\nStopping: ▶︎▶︎▶︎▶︎▶︎▷ Very High\r\nControl-Focused Base: Firm 4mm Non-Slip Organic Latex\r\nStiff Cushioning: Engineered for Strong Pressing Control\r\nPrecise Microstiching: Optimized Glide for High-Sensitivity Gaming\r\nUltra-Durable 360° Anti-Fray Flush Edges\r\n\r\n', 5000.00, 19, 'PulsarGamingGearsSomethingEditiongamingmousepad_01_large.webp', '2025-05-16 11:42:35', '2025-05-16 11:42:35');
 
 -- --------------------------------------------------------
 
@@ -637,7 +676,11 @@ INSERT INTO `reviews` (`PK_REVIEW_ID`, `FK1_CUSTOMER_ID`, `FK2_PRODUCT_ID`, `FK3
 (8, 24, 38, 0, 5, 'jarom dancer mo kalit lng redflag', '2025-05-09 18:26:58', NULL),
 (9, 24, 27, 0, 5, 'Good for gaming i love it', '2025-05-10 03:28:55', '1746818935_1746266457_0_71oSydXEo4S.jpg'),
 (10, 24, 28, 0, 4, 'Good for online class not for gaming', '2025-05-10 03:36:13', '1746819373_681e592db02f8_hero.jpg,1746819373_681e592db050a_hero1.jpg,1746819373_681e592db0628_IG.png'),
-(11, 26, 32, 0, 2, 'Disposable ni nga keyboard, baratohon murag insik', '2025-05-10 17:28:53', '1746869333_681f1c555f2b8_351453175_1191126874899419_117306819684368067_n.jpg');
+(11, 26, 32, 0, 2, 'Disposable ni nga keyboard, baratohon murag insik', '2025-05-10 17:28:53', '1746869333_681f1c555f2b8_351453175_1191126874899419_117306819684368067_n.jpg'),
+(12, 27, 49, 0, 5, 'Best Mousepad', '2025-05-16 12:40:25', NULL),
+(14, 27, 48, 56, 5, 'I heckin love Tenz', '2025-05-16 12:45:05', NULL),
+(15, 27, 41, 59, 1, 'Defective monitor', '2025-05-16 12:47:47', NULL),
+(16, 27, 39, 60, 5, 'Nicee router my internet is very fast now', '2025-05-16 12:57:13', NULL);
 
 -- --------------------------------------------------------
 
@@ -670,7 +713,8 @@ INSERT INTO `supplier` (`PK_SUPPLIER_ID`, `FK_USER_ID`, `S_LNAME`, `S_FNAME`, `P
 (3, 0, 'Dagupols', 'Client', '+56892134', 'Try me hack', 'Client@gmai.com', 'Buhisan', '6815bc100aa9e.jpg', '2025-04-26 02:23:42', '2025-04-26 02:23:42', 'Active'),
 (4, 0, 'Ancero', 'John Rey', '+565723257', 'JAHH Corp.', 'gwapokoancero123@gmail.com', 'B.rod', '6815bc070d4c6.jpg', '2025-04-26 02:25:00', '2025-04-26 02:25:00', 'Active'),
 (6, 1, 'Lahaylahay', 'Bevs', '092445678009', 'COMPUSPEC', 'bevs@1.com', 'CEBU', '467743265_2034794076942966_7629118095982581341_n.jpg', '2025-05-10 17:17:20', '2025-05-10 17:17:20', 'Active'),
-(0, 1, 'Pork', 'John', '0932145632146', 'J Pork Techs', 'johnpork@gmail.com', 'Cebu', 'd23687188aabd01cf01a9fc4e5cafd22.webp', '2025-05-16 02:54:19', '2025-05-16 02:54:19', 'Active');
+(7, 1, 'Pork', 'John', '0932145632146', 'J Pork Techs', 'johnpork@gmail.com', 'Cebu', 'd23687188aabd01cf01a9fc4e5cafd22.webp', '2025-05-16 02:54:19', '2025-05-16 02:54:19', 'Active'),
+(12, 1, 'Cheese', 'Tim', '09731976541', 'CheeseTechs', 'TCheese@email.com', 'Cebu', 'Screenshot_1743206173571_29.webp', '2025-05-16 11:39:47', '2025-05-16 11:40:01', 'Active');
 
 -- --------------------------------------------------------
 
@@ -696,7 +740,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`PK_USER_ID`, `L_NAME`, `F_NAME`, `EMAIL`, `PASSWORD_HASH`, `ADDRESS`, `PHONE_NUM`, `CREATED_AT`, `UPDATE_AT`, `IS_ADMIN`) VALUES
-(0, 'Admin', 'System', 'admin@gmail.com', '$2y$10$IuvaHPz32l.pwIiXENQgIuIDDldeKym450tpqFkOoTl4eT/pwKbhW', 'Compucore HQ', '09123456789', '2025-04-26 01:15:58', '0000-00-00 00:00:00', 1);
+(1, 'Admin', 'System', 'admin@gmail.com', '$2y$10$IuvaHPz32l.pwIiXENQgIuIDDldeKym450tpqFkOoTl4eT/pwKbhW', 'Compucore HQ', '09123456789', '2025-04-26 01:15:58', '0000-00-00 00:00:00', 1);
 
 --
 -- Indexes for dumped tables
@@ -770,20 +814,92 @@ ALTER TABLE `products`
   ADD KEY `FK2_SUPPLIER_ID` (`FK2_SUPPLIER_ID`);
 
 --
+-- Indexes for table `reviews`
+--
+ALTER TABLE `reviews`
+  ADD PRIMARY KEY (`PK_REVIEW_ID`);
+
+--
+-- Indexes for table `supplier`
+--
+ALTER TABLE `supplier`
+  ADD PRIMARY KEY (`PK_SUPPLIER_ID`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`PK_USER_ID`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `cart`
+--
+ALTER TABLE `cart`
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+
+--
+-- AUTO_INCREMENT for table `categories`
+--
+ALTER TABLE `categories`
+  MODIFY `PK_CATEGORY_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+
+--
+-- AUTO_INCREMENT for table `customer`
+--
+ALTER TABLE `customer`
+  MODIFY `PK_CUSTOMER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `PK_NOTIFICATION_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `PK_ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
+
+--
+-- AUTO_INCREMENT for table `order_detail`
+--
+ALTER TABLE `order_detail`
+  MODIFY `PK_ORDER_DETAIL_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+
+--
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `PK_PAYMENT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `PK_PRODUCT_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+
+--
+-- AUTO_INCREMENT for table `reviews`
+--
+ALTER TABLE `reviews`
+  MODIFY `PK_REVIEW_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `supplier`
+--
+ALTER TABLE `supplier`
+  MODIFY `PK_SUPPLIER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `PK_USER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

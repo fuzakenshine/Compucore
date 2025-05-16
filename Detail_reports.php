@@ -358,7 +358,7 @@ $result = $stmt->get_result();
                         <div><?= htmlspecialchars($row['PHONE_NUM']) ?></div>
                     </td>
                     <td><?= htmlspecialchars($row['products']) ?></td>
-                    <td>₱<?= number_format($row['total_amount'] ?? 0, 2) ?></td>
+                    <td style="text-align: right;">₱<?= str_replace('+', '', number_format($row['total_amount'] ?? 0, 2)) ?></td>
                     <td>
                         <span class="status-badge status-<?= strtolower($row['STATUS']) ?>">
                             <?= ucfirst($row['STATUS']) ?>
@@ -448,7 +448,14 @@ $result = $stmt->get_result();
                 // Get table data
                 const table = document.getElementById('reportsTable');
                 const rows = Array.from(table.querySelectorAll('tbody tr')).map(row => {
-                    return Array.from(row.cells).map(cell => cell.textContent.trim());
+                    return Array.from(row.cells).map((cell, i) => {
+                        let text = cell.textContent.trim();
+                        // For the 'Total Amount' column, remove any leading peso or plus sign for PDF export
+                        if (i === 4) {
+                            text = text.replace('₱', '').replace(/^\+/, '');
+                        }
+                        return text;
+                    });
                 });
                 
                 // Add table with improved styling
@@ -471,7 +478,10 @@ $result = $stmt->get_result();
                     alternateRowStyles: {
                         fillColor: [245, 245, 245]
                     },
-                    margin: { top: 10 }
+                    margin: { top: 10 },
+                    columnStyles: {
+                        4: { halign: 'right' } // Right-align the 'Total Amount' column
+                    }
                 });
                 
                 // Add footer with page numbers

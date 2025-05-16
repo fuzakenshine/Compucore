@@ -28,9 +28,9 @@ if (isset($_GET['selected_items'])) {
     $selected_items = explode(',', $_GET['selected_items']);
     $placeholders = str_repeat('?,', count($selected_items) - 1) . '?';
     $cart_sql .= " AND c.cart_id IN ($placeholders)";
+    $params = array_merge([$user_id], array_map('intval', $selected_items));
+    $types = str_repeat("i", count($params));
     $stmt = $conn->prepare($cart_sql);
-    $types = "i" . str_repeat("i", count($selected_items));
-    $params = array_merge([$user_id], $selected_items);
     $stmt->bind_param($types, ...$params);
 } else {
     $stmt = $conn->prepare($cart_sql);
@@ -38,11 +38,12 @@ if (isset($_GET['selected_items'])) {
 }
 $stmt->execute();
 $cart_result = $stmt->get_result();
+$cart_rows = $cart_result->fetch_all(MYSQLI_ASSOC);
 
 // Group cart items by supplier
 $supplier_items = [];
 $subtotal = 0;
-while($cart_item = $cart_result->fetch_assoc()) {
+foreach($cart_rows as $cart_item) {
     $supplier_id = $cart_item['PK_SUPPLIER_ID'];
     if (!isset($supplier_items[$supplier_id])) {
         $supplier_items[$supplier_id] = [
